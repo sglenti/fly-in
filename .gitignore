@@ -1,0 +1,21 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Virtual Environments ---
+# If you use .venv, venv, or .env
+.venv/
+venv/
+env/
+.env
+
+# --- Testing/Linting/Coverage ---
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# --- Project Specific ---
+# If you create local map test files that shouldn't be committed
+*.local

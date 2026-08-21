@@ -1,0 +1,11 @@
+src/__init__.py
+src/main.py
+src/parser.py
+src/models/__init__.py
+src/models/zone.py
+src/models/connection.py
+src/models/drone.py
+src/models/map.py
+src/simulation/__init__.py
+src/simulation/pathfinder.py
+src/simulation/engine.py

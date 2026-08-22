@@ -32,8 +32,31 @@ class Map():
         self._connections.append(connection)
 
     def initialize_graph(self) -> None:
+        if self._start_zone == self._end_zone:
+            raise ValueError("Start and End hubs must differ!") 
         # fill adj_list (if duplicates, raise error)
-        pass
+        processed_pairs = set()
+
+        for conn in self._connections:
+            if (conn.source_name not in self._zones
+                    or conn.target_name not in self._zones):
+                raise ValueError("Invalid hub name in connection "
+                    f"{conn.source_name}-{conn.target_name}")
+            if conn.source_name == conn.target_name:
+                raise ValueError("Connection source and target must differ: "
+                    f"{conn.source_name}-{conn.target_name}")
+
+            pair = tuple(sorted((conn.source_name, conn.target_name)))
+            if pair in processed_pairs:
+                raise ValueError("Duplicated connection: "
+                    f"{conn.source_name}-{conn.target_name}")
+
+            if conn.source_name not in self._adj_list:
+                self._adj_list[conn.source_name] = []
+            self._adj_list[conn.source_name].append(conn)
+            if conn.target_name not in self._adj_list:
+                self._adj_list[conn.target_name] = []
+            self._adj_list[conn.target_name].append(conn)
 
     def to_json(self) -> str:
         data = {

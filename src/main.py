@@ -4,12 +4,12 @@ import sys
 
 
 if __name__ == "__main__":
-    my_map = Map()
-    parser = Parser(my_map)
+    sim_map = Map()
+    parser = Parser(sim_map)
     try:
         parser.parse_file(sys.argv[1])
     except OSError as e:
         print(e)
         sys.exit()
-    my_map.initialize_graph()
-    print(my_map.to_json())
+    sim_map.initialize_graph()
+    print(sim_map.to_json())

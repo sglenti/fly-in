@@ -36,6 +36,8 @@ class Parser():
                     if key_value[1].isdigit():
                         key_value[1] = int(key_value[1])
                     params[key_value[0]] = key_value[1]
+                if 'zone' in params:
+                    params['zone_type'] = params.pop('zone')
                 metadata = ZoneMetadata(**params)
             return Zone(name=values[0], x=values[1], y=values[2], metadata=metadata)
 

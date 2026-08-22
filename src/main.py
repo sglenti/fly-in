@@ -7,7 +7,7 @@ if __name__ == "__main__":
     my_map = Map()
     parser = Parser(my_map)
     try:
-        parser.parse_file("../maps/easy/02_simple_fork.txt")
+        parser.parse_file(sys.argv[1])
     except OSError as e:
         print(e)
         sys.exit()

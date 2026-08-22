@@ -13,3 +13,4 @@ if __name__ == "__main__":
         sys.exit()
     sim_map.initialize_graph()
     print(sim_map.to_json())
+    sim_map.print_topology()

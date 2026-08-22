@@ -64,3 +64,9 @@ class Map():
             "connections": [c.model_dump() for c in self._connections]
         }
         return json.dumps(data, indent=4)
+
+    def print_topology(self):
+        for zone_name, connections in self._adj_list.items():
+            targets = [c.target_name if c.source_name == zone_name 
+                    else c.source_name for c in connections]
+            print(f"<{zone_name}>: {' | '.join(targets)}")

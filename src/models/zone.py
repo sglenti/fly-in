@@ -14,12 +14,15 @@ class ZoneMetadata(BaseModel):
     zone_type: ZoneType = ZoneType.NORMAL
     color: Optional[str] = None
     max_drones: int = Field(default=1, gt=0)
+    model_config = {
+        'extra': 'forbid'
+    }
 
 
 class Zone(BaseModel):
     name: str
-    x: int = Field(ge=0)
-    y: int = Field(ge=0)
+    x: int
+    y: int
     metadata: ZoneMetadata = Field(default_factory=ZoneMetadata)
 
     @field_validator('name')

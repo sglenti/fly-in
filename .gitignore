@@ -19,3 +19,4 @@ htmlcov/
 # --- Project Specific ---
 # If you create local map test files that shouldn't be committed
 *.local
+maps

@@ -9,3 +9,5 @@ src/models/map.py
 src/simulation/__init__.py
 src/simulation/pathfinder.py
 src/simulation/engine.py
+src/view/rich_renderer.py
+

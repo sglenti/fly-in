@@ -11,3 +11,4 @@ src/simulation/pathfinder.py
 src/simulation/engine.py
 src/view/rich_renderer.py
 
+src/view/window_renderer.py

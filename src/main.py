@@ -18,7 +18,7 @@ if __name__ == "__main__":
 #    sim_map.print_topology()
     print(sim_map.to_json())
     view = ConsoleRenderer(sim_map)
-    window = WindowRenderer(sim_map, 80, 200)
+    window = WindowRenderer(sim_map)
     running = True
     clock = pygame.time.Clock()
     while running:

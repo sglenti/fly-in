@@ -11,6 +11,9 @@ class Map():
         self._start_zone: Optional[Zone] = None
         self._end_zone: Optional[Zone] = None
 
+    def get_zones(self) -> Dict[str, Zone]:
+        return self._zones
+
     def set_start_zone(self, zone: Zone) -> None:
         if self._start_zone is not None:
             raise ValueError(f"Map already has a start zone: {self._start_zone.name}")
@@ -70,3 +73,7 @@ class Map():
             targets = [c.target_name if c.source_name == zone_name 
                     else c.source_name for c in connections]
             print(f"<{zone_name}>: {' | '.join(targets)}")
+
+    @property
+    def start_zone_name(self) -> str:
+        return self._start_zone.name

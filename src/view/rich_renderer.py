@@ -1,15 +1,38 @@
 from rich.console import Console
 from rich.table import Table
+from rich.live import Live
 from src.models import Map, Drone
 from typing import Dict
 
 
 class ConsoleRenderer:
     def __init__(self, map_graph: Map) -> None:
-        self.console = Console()
+        self._console = Console()
         self.map_graph = map_graph
+        self._live: Live = None
+    
+    def start_session(self) -> None:
+        """Starts the live terminal display session."""
+        self._live = Live(auto_refresh=False)
+        self._live.start()
 
-    def render_map_info(self, drones: Dict[str, Drone]) -> None:
+    def end_session(self) -> None:
+        """Stops the live terminal display session."""
+        if self._live:
+            self._live.stop()
+
+    def render_turn(self, turn: int, drones: Dict[str, Drone]) -> None:
+        """Updates the table in place without breaking headless logic."""
+        # table = self._generate_table(turn, drones)
+        table = self.render_map_info(turn, drones)
+        # Update what the Live display is showing
+        if self._live:
+            self._live.update(table)
+            self._live.refresh()
+        else:
+            self._console.print(table)
+
+    def render_map_info(self, turn: int, drones: Dict[str, Drone]) -> Table:
         table = Table(title="Map Topology")
         table.add_column("Zone")
         table.add_column("Type")
@@ -29,4 +52,4 @@ class ConsoleRenderer:
                     ",".join([d.id for d in filter(
                         lambda d: d.current_location == node.name,drones.values())])
                     )
-        self.console.print(table)
+        return table

@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Set, Tuple
 from src.models import Drone, Map
 from .pathfinder import PathFinder
 
@@ -10,11 +10,21 @@ class SimulationEngine():
         self._turn: int = 0
         self._map: Map = sim_map
         self._path_finder: PathFinder = PathFinder()
+        self._reservations: Set[Tuple[str, int]] = set()
 
     def register_drone(self, drone: Drone) -> None:
         self._drones[drone.id] = drone
 
     def start(self) -> None:
+        for d in self._drones.values():
+            d.path = self._path_finder.time_dijkstra(self._map._zones,
+                                                self._map._adj_list,
+                                                d,
+                                                self._reservations,
+                                                self._map._end_zone.name)
+            for node in d.path:
+                self._reservations.add(node)
+
         self._running = True
 
     def stop(self) -> None:
@@ -23,31 +33,11 @@ class SimulationEngine():
     def is_running(self) -> bool:
         return self._running
 
-    def reconstruct_path(self, parent: dict, start: str, goal: str) -> list[str]:
-        current = goal
-        path = []
-        
-        # If the goal was never reached, return an empty path
-        if current not in parent and current != start:
-            return []
-            
-        while current in parent:
-            path.append(current)
-            current = parent[current]
-        
-        path.reverse() # Since we walked backwards from goal to start
-        return path
-
     def process_turn(self) -> None:
         for d in self._drones.values():
-            self._path_finder.update(d.path)
-            p = self._path_finder.dijkstra(self._map._zones, self._map._adj_list, d)
-            print("Path:", self.reconstruct_path(
-                p, self._map._start_zone.name, self._map._end_zone.name))
-
-        for d in self._drones.values():
+            print(f"{d.id} Path:", d.path)
             if len(d.path):
-                d.position = d.path.pop(0)
+                d.current_location = d.path.pop(0)[0]
 
     def calculate_all_occupancies(self) -> Dict[str, int]:
         return {z: sum(z == d.current_location for d in self._drones.values())

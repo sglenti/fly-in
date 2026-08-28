@@ -51,7 +51,6 @@ class PathFinder():
         def reconstruct_path(parents: dict, start: str, goal: str) -> list[str]:
             current = goal
             path = []
-            print("############", parents)
             # If the goal was never reached, return an empty path
             if current not in parent and current != start:
                 return []
@@ -84,9 +83,11 @@ class PathFinder():
             if cost > distances[(current_node, current_time)]:
                 continue
 
+            # We reach goal:
             if current_node == goal:
                 break
-            
+
+            # Is there capacity to wait here?:
             if (current_node, current_time + 1) not in reservations:
                 distances[(current_node, current_time + 1)] = cost + 1
                 heapq.heappush(
@@ -104,15 +105,18 @@ class PathFinder():
                 
                 if next_state in visited:
                     continue
-                
+
                 # When evaluate a next state (neighbor, arrival_time):
-                if next_state in reservations:
-                    # Impassable! Treat it as a wall.
+                current_occupants = reservations.get(next_state, 0)
+                zone_capacity = zones[neighbor].metadata.max_drones
+                if current_occupants >= zone_capacity:
+                    # Too crowded! This state is truly blocked.
                     continue
+
                 # If not visited, treat as is: 
                 if next_state not in distances:
                     distances[next_state] = sys.maxsize 
-               
+
                 # If we found a shorter path to v through u, update it
                 if distances[current_state] + weight < distances[next_state]:
                     distances[next_state] = distances[current_state] + weight

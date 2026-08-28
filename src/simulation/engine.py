@@ -1,4 +1,4 @@
-from typing import Dict, Set, Tuple
+from typing import Dict, Tuple
 from src.models import Drone, Map
 from .pathfinder import PathFinder
 
@@ -10,7 +10,7 @@ class SimulationEngine():
         self._turn: int = 0
         self._map: Map = sim_map
         self._path_finder: PathFinder = PathFinder()
-        self._reservations: Set[Tuple[str, int]] = set()
+        self._reservations: Dict[Tuple[str, int], int] = {}
 
     def register_drone(self, drone: Drone) -> None:
         self._drones[drone.id] = drone
@@ -23,7 +23,9 @@ class SimulationEngine():
                                                 self._reservations,
                                                 self._map._end_zone.name)
             for node in d.path:
-                self._reservations.add(node)
+                if (node[0] != self._map._start_zone.name and
+                    node[0] != self._map._end_zone.name):
+                    self._reservations[node] = self._reservations.get(node, 0) + 1
 
         self._running = True
 
@@ -38,6 +40,7 @@ class SimulationEngine():
             print(f"{d.id} Path:", d.path)
             if len(d.path):
                 d.current_location = d.path.pop(0)[0]
+        self._turn += 1
 
     def calculate_all_occupancies(self) -> Dict[str, int]:
         return {z: sum(z == d.current_location for d in self._drones.values())

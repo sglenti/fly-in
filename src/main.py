@@ -31,7 +31,6 @@ if __name__ == "__main__":
     sim_engine.start()
     while sim_engine.is_running():
 #    for turn in range(8, 1):
-        print("in loop")
 #        for event in pygame.event.get():
 #            if event.type == pygame.QUIT:
 #                sim_engine.stop()
@@ -39,9 +38,9 @@ if __name__ == "__main__":
         # window.draw()
 #        clock.tick(60)
         occupancy_map = sim_engine.calculate_all_occupancies()
-        print(occupancy_map)
+        print(f"Turn {sim_engine._turn}:", occupancy_map)
         # rprint(sim_map._adj_list)
-        console_view.render_turn(1, sim_engine._drones)
+#        console_view.render_turn(1, sim_engine._drones)
 
         if occupancy_map[sim_map._end_zone.name] == len(sim_engine._drones):
             console_view.end_session()

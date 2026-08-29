@@ -20,3 +20,4 @@ htmlcov/
 # If you create local map test files that shouldn't be committed
 *.local
 maps
+src/git.egg-info/

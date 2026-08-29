@@ -42,8 +42,8 @@ class ConsoleRenderer:
         
         # logic to loop through map._adj_list and add rows...
         for node in self.map_graph._zones.values():
-            neighbors = [c.target_name if c.source_name == node.name 
-                else c.source_name for c in self.map_graph._adj_list[node.name]]
+            neighbors = [c.end_point2 if c.end_point1 == node.name 
+                else c.end_point1 for c in self.map_graph._adj_list[node.name]]
             table.add_row(
                     node.name,
                     node.metadata.zone_type,

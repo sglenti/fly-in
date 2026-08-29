@@ -32,8 +32,8 @@ class PathFinder():
 
             # Explore all neighbors of the current vertex
             for conn in adj_list[current_node]:
-                neighbor = (conn.target_name if conn.target_name != current_node
-                            else conn.source_name)
+                neighbor = (conn.end_point2 if conn.end_point2 != current_node
+                            else conn.end_point1)
                 weight = 2 if zones[neighbor].metadata.zone_type == "restricted" else 1
                 # If we found a shorter path to v through u, update it
                 if distances[current_node] + weight < distances[neighbor]:
@@ -98,8 +98,8 @@ class PathFinder():
 
             # Explore all neighbors of the current vertex
             for conn in adj_list[current_node]:
-                neighbor = (conn.target_name if conn.target_name != current_node
-                            else conn.source_name)
+                neighbor = (conn.end_point2 if conn.end_point2 != current_node
+                            else conn.end_point1)
                 weight = 2 if zones[neighbor].metadata.zone_type == "restricted" else 1
                 next_state = (neighbor, current_time + weight)
                 

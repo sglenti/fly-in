@@ -45,8 +45,8 @@ class WindowRenderer:
         # 1. Draw Connections (Edges)
         for conn in self.map_graph._connections:
             # We need to look up the actual zones to get their coordinates
-            z1 = self.map_graph._zones[conn.source_name]
-            z2 = self.map_graph._zones[conn.target_name]
+            z1 = self.map_graph._zones[conn.end_point1]
+            z2 = self.map_graph._zones[conn.end_point2]
             pygame.draw.line(self.screen, (get_rgb("white")), 
                              self._to_pixels(z1.x, z1.y), 
                              self._to_pixels(z2.x, z2.y), 2)

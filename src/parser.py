@@ -37,7 +37,7 @@ class Parser():
             hubs = values[0].split("-")
             if len(hubs) != 2:
                 raise ValueError(f"Wrong connection format: {values[0]}")
-            params = {"source_name": hubs[0], "target_name": hubs[1]}
+            params = {"end_point1": hubs[0], "end_point2": hubs[1]}
             if len(values) == 2:
                 key, value = values[1].strip("[]").split("=")
                 params[key] = int(value)
@@ -52,6 +52,7 @@ class Parser():
         first_line = content[0].split(": ")
         if first_line[0] == "nb_drones":
             nb_drones = int(first_line[1])
+            self._engine.set_nb_drones(nb_drones)
         else:
             raise SyntaxError(f"Wrong syntax for map file, line 1")
 

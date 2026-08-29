@@ -14,10 +14,25 @@ class Map():
     def get_zones(self) -> Dict[str, Zone]:
         return self._zones
 
+    def get_end(self) -> str:
+        return self._end_zone.name
+
+    def get_start(self) -> str:
+        return self._start_zone.name
+
     def set_start_zone(self, zone: Zone) -> None:
         if self._start_zone is not None:
             raise ValueError(f"Map already has a start zone: {self._start_zone.name}")
         self._start_zone = zone
+
+    def get_adj_list(self) -> Dict[str, List[Connection]]:
+        return self._adj_list
+
+    def get_connection(self, node1: str, node2: str) -> Optional[Connection]:
+        for conn in self._adj_list.get(node1, []):
+            if conn.end_point1 == node2 or conn.end_point2 == node2:
+                return conn
+        return None
 
     def set_end_zone(self, zone: Zone) -> None:
         if self._end_zone is not None:
@@ -41,25 +56,25 @@ class Map():
         processed_pairs = set()
 
         for conn in self._connections:
-            if (conn.source_name not in self._zones
-                    or conn.target_name not in self._zones):
+            if (conn.end_point1 not in self._zones
+                    or conn.end_point2 not in self._zones):
                 raise ValueError("Invalid hub name in connection "
-                    f"{conn.source_name}-{conn.target_name}")
-            if conn.source_name == conn.target_name:
+                    f"{conn.end_point1}-{conn.end_point2}")
+            if conn.end_point1 == conn.end_point2:
                 raise ValueError("Connection source and target must differ: "
-                    f"{conn.source_name}-{conn.target_name}")
+                    f"{conn.end_point1}-{conn.end_point2}")
 
-            pair = tuple(sorted((conn.source_name, conn.target_name)))
+            pair = tuple(sorted((conn.end_point1, conn.end_point2)))
             if pair in processed_pairs:
                 raise ValueError("Duplicated connection: "
-                    f"{conn.source_name}-{conn.target_name}")
+                    f"{conn.end_point1}-{conn.end_point2}")
 
-            if conn.source_name not in self._adj_list:
-                self._adj_list[conn.source_name] = []
-            self._adj_list[conn.source_name].append(conn)
-            if conn.target_name not in self._adj_list:
-                self._adj_list[conn.target_name] = []
-            self._adj_list[conn.target_name].append(conn)
+            if conn.end_point1 not in self._adj_list:
+                self._adj_list[conn.end_point1] = []
+            self._adj_list[conn.end_point1].append(conn)
+            if conn.end_point2 not in self._adj_list:
+                self._adj_list[conn.end_point2] = []
+            self._adj_list[conn.end_point2].append(conn)
 
     def to_json(self) -> str:
         data = {
@@ -70,8 +85,8 @@ class Map():
 
     def print_topology(self):
         for zone_name, connections in self._adj_list.items():
-            targets = [c.target_name if c.source_name == zone_name 
-                    else c.source_name for c in connections]
+            targets = [c.end_point2 if c.end_point1 == zone_name 
+                    else c.end_point1 for c in connections]
             print(f"<{zone_name}>: {' | '.join(targets)}")
 
     @property

@@ -1,5 +1,5 @@
 from typing import Dict, Tuple
-from src.models import Drone, Map
+from src.models import Drone, Map, Connection
 from .pathfinder import PathFinder
 
 
@@ -11,22 +11,52 @@ class SimulationEngine():
         self._map: Map = sim_map
         self._path_finder: PathFinder = PathFinder()
         self._reservations: Dict[Tuple[str, int], int] = {}
+        self._link_res: Dict[Tuple[Connection, int], int] = {}
+        self._nb_drones: int 
 
     def register_drone(self, drone: Drone) -> None:
         self._drones[drone.id] = drone
 
-    def start(self) -> None:
-        for d in self._drones.values():
-            d.path = self._path_finder.time_dijkstra(self._map._zones,
-                                                self._map._adj_list,
-                                                d,
-                                                self._reservations,
-                                                self._map._end_zone.name)
-            for node in d.path:
-                if (node[0] != self._map._start_zone.name and
-                    node[0] != self._map._end_zone.name):
-                    self._reservations[node] = self._reservations.get(node, 0) + 1
+    def set_nb_drones(self, nb_drones: int) -> None:
+        self._nb_drones = nb_drones
 
+    def get_nb_drones(self) -> int:
+        return self._nb_drones
+
+    def get_drones(self) -> Dict[str, Drone]:
+        return self._drones
+
+    def get_turn(self) -> int:
+        return self._turn
+
+    def get_link_res(self) -> Dict[Tuple[Connection, int], int]:
+        return self._link_res
+
+    def calculate_paths(self) -> None:
+        for d in self._drones.values():
+            d.path = self._path_finder.time_dijkstra(
+                        self._map._zones,
+                        self._map._adj_list,
+                        d,
+                        self._reservations,
+                        self._map._end_zone.name)
+            start = self._map.get_start()
+            end = self._map.get_end()
+            current_pos = start
+            
+            for node in d.path:
+                target_node = node[0]
+                time_step = node[1]
+                if (target_node != start and target_node != end):
+                    self._reservations[node] = self._reservations.get(node, 0) + 1
+            
+                conn = self._map.get_connection(current_pos, target_node)
+                if conn:
+                    edge = (conn, time_step)
+                    self._link_res[edge] = self._link_res.get(edge, 0) + 1
+                current_pos = target_node
+
+    def start(self) -> None:
         self._running = True
 
     def stop(self) -> None:

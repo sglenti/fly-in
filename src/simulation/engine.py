@@ -66,11 +66,19 @@ class SimulationEngine():
         return self._running
 
     def process_turn(self) -> None:
+        self._turn += 1
         for d in self._drones.values():
             print(f"{d.id} Path:", d.path)
             if len(d.path):
-                d.current_location = d.path.pop(0)[0]
-        self._turn += 1
+                if d.path[0][1] == self._turn:
+                    # Drone arrive at new node:
+                    d.current_location = d.path.pop(0)[0]
+                elif d.path[0][1] == self._turn + 1:
+                    # Drone in transit to restricted zone:
+                    d.current_location = None
+                else:
+                    # Houston, we have a problem:
+                    raise ValueError("Drone with path node in the past!")
 
     def calculate_all_occupancies(self) -> Dict[str, int]:
         return {z: sum(z == d.current_location for d in self._drones.values())

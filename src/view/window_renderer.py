@@ -5,15 +5,21 @@ from typing import Optional
 
 
 def get_rgb(color_name: Optional[str]) -> tuple[int, int, int]:
-    try:
-        # If color_name is None, default to something neutral like 'gray'
-        rich_color = Color.parse(color_name or "gray")
-        # .triplet gives (R, G, B) as integers
-        return rich_color.get_truecolor()
-    except Exception as e:
-        # Fallback
-        print(e)
+    if not color_name:
         return (128, 128, 128)
+        
+    clean_name = color_name.lower().strip()
+    
+    # Try the raw name first (e.g. "red", "cyan", or a hex code like "#FFA500")
+    # Then try appending "1" if it fails (like "orange" -> "orange1")
+    for variant in [clean_name, f"{clean_name}1"]:
+        try:
+            return Color.parse(variant).get_truecolor()
+        except Exception:
+            continue
+            
+    # Ultimate fallback if neither works
+    return (128, 128, 128)
 
 
 class WindowRenderer:

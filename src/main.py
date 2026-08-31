@@ -44,9 +44,6 @@ class Application:
     #    clock = pygame.time.Clock()
         while self.engine.is_running():
     #    for turn in range(8, 1):
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.engine.stop()
             self.engine.process_turn()
             window_view.draw()
     #        clock.tick(60)
@@ -56,14 +53,16 @@ class Application:
 
             if (occupancy_map[self.map_graph.get_end()] ==
                     self.engine.get_nb_drones()):
-                a = input("Quit?(Y/n): ")
-                if a == "y":
-                    self.engine.stop()
+                self.engine.stop()
             time.sleep(0.5)
 
         rprint(self.map_graph.get_adj_list())
         rprint(self.engine.get_link_res())
         # 5. Closing
+        while pygame.get_init() and pygame.display.get_surface() is not None:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
         console_view.end_session()
 
 

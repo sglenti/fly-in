@@ -1,3 +1,4 @@
+from src.models import Drone, Map, Connection
 import heapq
 import sys
 from typing import Dict
@@ -45,8 +46,15 @@ class PathFinder():
         print("Parents dict:", parent)
         return parent
 
-    def time_dijkstra(self, zones, adj_list, drone, reservations, goal, time=0
-                      ) -> Dict[str, str]:
+    def time_dijkstra(
+            self,
+            map_graph: Map,
+            drone: Drone,
+            reservations,
+            link_res,
+            goal,
+            time=0
+            ) -> Dict[str, str]:
 
         def reconstruct_path(parents: dict, start: str, goal: str) -> list[str]:
             current = goal
@@ -62,6 +70,9 @@ class PathFinder():
             path.reverse() # Since we walked backwards from goal to start
             return path
 
+        zones = map_graph.get_zones()
+        connections = map_graph.get_conn_list()
+        adj_list = map_graph.get_adj_list()
         src = drone.current_location
 
         # Min-heap (priority queue) storing pairs of (time-space, distance)
@@ -69,14 +80,14 @@ class PathFinder():
 
         distances = {(src, 0): 0}
         parent = {}
-        visited = []
+        visited = set()
 
         # Distance-time from source to itself is 0
-        heapq.heappush(priority_queue, (0, src, time))
+        heapq.heappush(priority_queue, (0, 0, src, time))
 
         # Process the queue until all reachable vertices are finalized
         while priority_queue:
-            cost, current_node, current_time = heapq.heappop(priority_queue)
+            cost, priority, current_node, current_time = heapq.heappop(priority_queue)
             current_state = (current_node, current_time)
             
             # If this distance not the latest shortest one, skip it
@@ -88,13 +99,19 @@ class PathFinder():
                 break
 
             # Is there capacity to wait here?:
-            if (current_node, current_time + 1) not in reservations:
-                distances[(current_node, current_time + 1)] = cost + 1
+            wait_state = (current_node, current_time + 1)
+            if wait_state not in reservations and wait_state not in visited:
+                distances[wait_state] = cost + 1
                 heapq.heappush(
                             priority_queue,
-                            (cost + 1, current_node, current_time + 1)
+                            (
+                                cost + 1,
+                                priority,
+                                current_node,
+                                current_time + 1)
                             )
                 parent[(current_node, current_time + 1)] = current_state
+                visited.add(wait_state)
 
             # Explore all neighbors of the current vertex
             for conn in adj_list[current_node]:
@@ -111,8 +128,10 @@ class PathFinder():
 
                 # When evaluate a next state (neighbor, arrival_time):
                 current_occupants = reservations.get(next_state, 0)
+                link_users = link_res.get((conn, current_time), 0)
                 zone_capacity = zones[neighbor].metadata.max_drones
-                if current_occupants >= zone_capacity:
+                link_capacity = conn.max_link_capacity
+                if current_occupants >= zone_capacity or link_users >= link_capacity:
                     # Too crowded! This state is truly blocked.
                     continue
 
@@ -124,10 +143,16 @@ class PathFinder():
                 if distances[current_state] + weight < distances[next_state]:
                     distances[next_state] = distances[current_state] + weight
                     parent[next_state] = current_state
-                    visited.append(next_state)
+                    visited.add(next_state)
+                    new_priority = (priority - 1 if zones[neighbor].metadata.
+                            zone_type == "priority" else priority)
                     heapq.heappush(
                             priority_queue,
-                            (distances[next_state], neighbor, current_time + weight)
+                            (
+                                distances[next_state], 
+                                new_priority, 
+                                neighbor, 
+                                current_time + weight)
                             )
 
 #        print("Distances dict:", distances)

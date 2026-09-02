@@ -35,10 +35,10 @@ class SimulationEngine():
     def calculate_paths(self) -> None:
         for d in self._drones.values():
             d.path = self._path_finder.time_dijkstra(
-                        self._map._zones,
-                        self._map._adj_list,
+                        self._map,
                         d,
                         self._reservations,
+                        self._link_res,
                         self._map._end_zone.name)
             start = self._map.get_start()
             end = self._map.get_end()
@@ -52,7 +52,7 @@ class SimulationEngine():
             
                 conn = self._map.get_connection(current_pos, target_node)
                 if conn:
-                    edge = (conn, time_step)
+                    edge = (conn, time_step - 1)
                     self._link_res[edge] = self._link_res.get(edge, 0) + 1
                 current_pos = target_node
 

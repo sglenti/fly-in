@@ -14,6 +14,12 @@ class Map():
     def get_zones(self) -> Dict[str, Zone]:
         return self._zones
 
+    def get_conn_list(self) -> List[Connection]:
+        return self._connections
+
+    def get_adj_list(self) -> Dict[str, List[Connection]]:
+        return self._adj_list
+
     def get_end(self) -> str:
         return self._end_zone.name
 
@@ -25,10 +31,9 @@ class Map():
             raise ValueError(f"Map already has a start zone: {self._start_zone.name}")
         self._start_zone = zone
 
-    def get_adj_list(self) -> Dict[str, List[Connection]]:
-        return self._adj_list
-
     def get_connection(self, node1: str, node2: str) -> Optional[Connection]:
+        if node1 == node2:
+            return None
         for conn in self._adj_list.get(node1, []):
             if conn.end_point1 == node2 or conn.end_point2 == node2:
                 return conn

@@ -44,7 +44,7 @@ class Application:
         while self.engine.is_running():
     #    for turn in range(8, 1):
             self.engine.process_turn()
-            window_view.draw()
+            window_view.draw(self.engine.get_drones())
             occupancy_map = self.engine.calculate_all_occupancies()
             print(f"Turn {self.engine.get_turn()}:", occupancy_map)
             console_view.render_turn(self.engine.get_turn(), self.engine.get_drones())
@@ -52,7 +52,7 @@ class Application:
             if (occupancy_map[self.map_graph.get_end()] ==
                     self.engine.get_nb_drones()):
                 self.engine.stop()
-            time.sleep(0.5)
+            time.sleep(1)
 
         rprint(self.map_graph.get_adj_list())
         rprint(self.engine.get_link_res())
@@ -60,7 +60,7 @@ class Application:
         # 5. Closing
         clock = pygame.time.Clock()
         while pygame.get_init() and pygame.display.get_surface() is not None:
-            window_view.draw()
+            window_view.draw(self.engine.get_drones())
             clock.tick(6)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:

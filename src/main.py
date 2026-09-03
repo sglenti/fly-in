@@ -31,20 +31,22 @@ class Application:
 
         # 2. Gentlemen, starts engines:
         self.engine.calculate_paths()
+        clock = pygame.time.Clock()
 
         # 3. Prepare views:
         console_view = ConsoleRenderer(self.map_graph)
         window_view = WindowRenderer(self.map_graph, 75)
 
         # 4. Execute simulation:
+        window_view.draw_animated_turn(self.engine.get_drones(), clock)
+        time.sleep(1.5)
         self.engine.start()
     #    console_view.start_session()
         console_view.render_turn(0, self.engine.get_drones())
     #    console_view.render_map_info(self.engine.get_drones())
         while self.engine.is_running():
-    #    for turn in range(8, 1):
             self.engine.process_turn()
-            window_view.draw(self.engine.get_drones())
+            window_view.draw_animated_turn(self.engine.get_drones(), clock)
             occupancy_map = self.engine.calculate_all_occupancies()
             print(f"Turn {self.engine.get_turn()}:", occupancy_map)
             console_view.render_turn(self.engine.get_turn(), self.engine.get_drones())
@@ -52,19 +54,21 @@ class Application:
             if (occupancy_map[self.map_graph.get_end()] ==
                     self.engine.get_nb_drones()):
                 self.engine.stop()
-            time.sleep(1)
+            time.sleep(1.5)
 
-        rprint(self.map_graph.get_adj_list())
-        rprint(self.engine.get_link_res())
+        # rprint(self.map_graph.get_adj_list())
+        # rprint(self.engine.get_link_res())
 
         # 5. Closing
-        clock = pygame.time.Clock()
         while pygame.get_init() and pygame.display.get_surface() is not None:
             window_view.draw(self.engine.get_drones())
             clock.tick(6)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE or event.key == pygame.K_q:
+                        pygame.quit()
         console_view.end_session()
 
 

@@ -85,6 +85,12 @@ class WindowRenderer:
             pygame.draw.circle(surface, rotor_color, corner, rotor_radius)
             # Optional outline for the rotors
             pygame.draw.circle(surface, get_rgb("grey15"), corner, rotor_radius, 1)
+        
+        # 3. Drone label
+        text_surf = self.font.render(drone_id, True, get_rgb("white"))
+        text_rect = text_surf.get_rect()
+        text_rect.center = (center[0], center[1])
+        self.screen.blit(text_surf, text_rect)
 
     def draw_static_map(self, drones: Dict[str, Drone]) -> None:
         self.screen.fill(get_rgb("gray15"))  # Dark gray background

@@ -74,6 +74,8 @@ class SimulationEngine():
                     # Drone arrive at new node:
                     if d.path[0][0] == d.current_location:
                         d.status = DroneStatus.WAITING
+                    elif d.current_location == None:
+                        d.status = DroneStatus.IN_TRANSIT
                     else:
                         d.status = DroneStatus.MOVING
                     d.current_location = d.path.pop(0)[0]

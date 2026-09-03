@@ -166,6 +166,7 @@ class WindowRenderer:
         # 1. Categorize drones ONCE at the start of the turn animation
         docked_groups: Dict[str, list[str]] = {}
         moving_drones = {}
+        in_transit = {}
 
         for d_id, drone in drones.items():
             if drone.status == DroneStatus.WAITING or drone.status == DroneStatus.DELIVERED:
@@ -173,6 +174,8 @@ class WindowRenderer:
                 if loc not in docked_groups:
                     docked_groups[loc] = []
                 docked_groups[loc].append(d_id)
+            elif drone.status == DroneStatus.IN_TRANSIT:
+                in_transit[d_id] = drone
             else:
                 moving_drones[d_id] = drone
         
@@ -206,24 +209,60 @@ class WindowRenderer:
                 z_target = self.map_graph.get_zones().get(target_zone_name)
 
                 if z_start and z_target:
-                    if z_start == z_target:
-                        pass
-                        current_pixel_pos = self._get_dock_position(
-                            self._to_pixels(z_start.x, z_start.y),
-                            1, z_start.metadata.max_drones)
-                    else:
-                        p1 = self._to_pixels(z_start.x, z_start.y)
-                        p2 = self._to_pixels(z_target.x, z_target.y)
+                    p1 = self._to_pixels(z_start.x, z_start.y)
+                    p2 = self._to_pixels(z_target.x, z_target.y)
 
-                        # Calculate smooth position using Lerp!
-                        current_pixel_pos = self._lerp(p1, p2, t)
+                    # Calculate smooth position using Lerp!
+                    current_pixel_pos = self._lerp(p1, p2, t)
 
-                        # Draw the drone at this interpolated pixel position
+                    # Draw the drone at this interpolated pixel position
                     self._draw_abstract_drone(current_pixel_pos, drone.id)
-                    
+
+            # 5. Draw drones in transit:
+            for d_id, drone in in_transit.items():
+                if not drone.current_location:
+                    self.curr_drones_pos[d_id] = self.prev_drones_pos[d_id]
+                    start_zone_name = self.prev_drones_pos.get(d_id)
+                    target_zone_name = drone.path[0][0]
+                else:
+                    start_zone_name = self.prev_drones_pos.get(d_id)
+                    target_zone_name = drone.current_location
+
+                # Get pixel coordinates for start and target zones
+                z_start = self.map_graph.get_zones().get(start_zone_name)
+                z_target = self.map_graph.get_zones().get(target_zone_name)
+
+                if z_start and z_target:
+                    p1 = self._to_pixels(z_start.x, z_start.y)
+                    p2 = self._to_pixels(z_target.x, z_target.y)
+                    p_middle = ((p1[0] + p2[0]) // 2, (p1[1] + p2[1]) // 2)
+
+                    # Calculate smooth position using Lerp!
+                    if not drone.current_location:
+                        current_pixel_pos = self._lerp(p1, p_middle, t)
+                    else:
+                        current_pixel_pos = self._lerp(p_middle, p2, t)
+
+                    # Draw the drone at this interpolated pixel position
+                    self._draw_abstract_drone(current_pixel_pos, drone.id)
+
+            # 6. Draw docked drones
+            for name, dock in docked_groups.items():
+                zone = self.map_graph.get_zones().get(name)
+                if zone:
+                    for d_idx, drone in enumerate(dock, 1):
+                        docked_pos = self._get_dock_position(
+                                self._to_pixels(zone.x, zone.y), d_idx, len(dock))
+                        self._draw_abstract_drone(docked_pos, drone)
             pygame.display.flip()
             clock.tick(60) # Keep it locked at 60 FPS for butter-smooth motion
 
+        for d_id, drone in in_transit.items():
+            if drone.current_location:
+                if drone.current_location not in docked_groups:
+                    docked_groups[drone.current_location] = []
+                docked_groups[drone.current_location].append(d_id)
+        
         # 4: Dock drones after arrival:
         self.draw_static_map()
         for d in moving_drones.values():
@@ -234,7 +273,21 @@ class WindowRenderer:
             zone = self.map_graph.get_zones().get(name)
             if zone:
                 for d_idx, drone in enumerate(dock, 1):
+                    if drone in in_transit:
+                        in_transit.pop(drone)                        
                     docked_pos = self._get_dock_position(
                             self._to_pixels(zone.x, zone.y), d_idx, len(dock))
                     self._draw_abstract_drone(docked_pos, drone)
+        for d_id, drone in in_transit.items():
+            start_zone_name = self.prev_drones_pos.get(d_id)
+            target_zone_name = drone.path[0][0]
+            z_start = self.map_graph.get_zones().get(start_zone_name)
+            z_target = self.map_graph.get_zones().get(target_zone_name)
+            
+            if z_start and z_target:
+                p1 = self._to_pixels(z_start.x, z_start.y)
+                p2 = self._to_pixels(z_target.x, z_target.y)
+                p_middle = ((p1[0] + p2[0]) // 2, (p1[1] + p2[1]) // 2)
+                self._draw_abstract_drone(p_middle, drone.id)
+
         pygame.display.flip()

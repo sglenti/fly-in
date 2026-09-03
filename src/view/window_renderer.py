@@ -1,6 +1,7 @@
 import pygame
+import math
 from rich.color import Color
-from src.models import Map, Drone
+from src.models import Map, Drone, DroneStatus
 from typing import Optional, Dict, Tuple
 
 
@@ -92,7 +93,26 @@ class WindowRenderer:
         text_rect.center = (center[0], center[1])
         self.screen.blit(text_surf, text_rect)
 
-    def draw_static_map(self, drones: Dict[str, Drone]) -> None:
+    def _get_dock_position(
+            self,
+            center: tuple[float, float],
+            index: int,
+            total_drones: int,
+            radius: float = 20.0
+            ) -> tuple[float, float]:
+        if total_drones <= 1:
+            return center
+            
+        cx, cy = center
+        # Calculate angle for this specific drone
+        angle = (2 * math.pi * index) / total_drones
+        
+        # Offset from center
+        x = cx + radius * math.cos(angle)
+        y = cy + radius * math.sin(angle)
+        return (x, y)
+
+    def draw_static_map(self) -> None:
         self.screen.fill(get_rgb("gray15"))  # Dark gray background
 
         # 1. Draw Connections (Edges)
@@ -143,12 +163,25 @@ class WindowRenderer:
             self,
             drones: Dict[str, Drone],
             clock: pygame.time.Clock) -> None:
-        # 1. Update positions: Old becomes current, Current becomes new targets
+        # 1. Categorize drones ONCE at the start of the turn animation
+        docked_groups: Dict[str, list[str]] = {}
+        moving_drones = {}
+
+        for d_id, drone in drones.items():
+            if drone.status == DroneStatus.WAITING or drone.status == DroneStatus.DELIVERED:
+                loc = drone.current_location
+                if loc not in docked_groups:
+                    docked_groups[loc] = []
+                docked_groups[loc].append(d_id)
+            else:
+                moving_drones[d_id] = drone
+        
+        # 2. Update positions: Old becomes current, Current becomes new targets
         self.prev_drones_pos = self.curr_drones_pos.copy()
         self.curr_drones_pos = {d_id: d.current_location for d_id,
                 d in drones.items()}
-        
-        # 2. Animation sub-loop (e.g., 30 frames for the turn transition)
+
+        # 3. Animation sub-loop (e.g., 30 frames for the turn transition)
         frames = 30
         for frame in range(frames + 1):
             t = frame / frames  # Progress from 0.0 (start of turn) to 1.0 (end of turn)
@@ -160,10 +193,10 @@ class WindowRenderer:
                     sys.exit()
                     
             # Clear screen and draw static map (zones and connections)
-            self.draw_static_map(drones)
+            self.draw_static_map()
             
-            # 3. Draw drones at interpolated positions
-            for d_id, drone in drones.items():
+            # 4. Draw drones at interpolated positions
+            for d_id, drone in moving_drones.items():
                 start_zone_name = self.prev_drones_pos.get(
                         d_id, drone.current_location)
                 target_zone_name = drone.current_location
@@ -171,16 +204,37 @@ class WindowRenderer:
                 # Get pixel coordinates for start and target zones
                 z_start = self.map_graph.get_zones().get(start_zone_name)
                 z_target = self.map_graph.get_zones().get(target_zone_name)
-                
+
                 if z_start and z_target:
-                    p1 = self._to_pixels(z_start.x, z_start.y)
-                    p2 = self._to_pixels(z_target.x, z_target.y)
-                    
-                    # Calculate smooth position using Lerp!
-                    current_pixel_pos = self._lerp(p1, p2, t)
-                    
-                    # Draw the drone at this interpolated pixel position
+                    if z_start == z_target:
+                        pass
+                        current_pixel_pos = self._get_dock_position(
+                            self._to_pixels(z_start.x, z_start.y),
+                            1, z_start.metadata.max_drones)
+                    else:
+                        p1 = self._to_pixels(z_start.x, z_start.y)
+                        p2 = self._to_pixels(z_target.x, z_target.y)
+
+                        # Calculate smooth position using Lerp!
+                        current_pixel_pos = self._lerp(p1, p2, t)
+
+                        # Draw the drone at this interpolated pixel position
                     self._draw_abstract_drone(current_pixel_pos, drone.id)
                     
             pygame.display.flip()
             clock.tick(60) # Keep it locked at 60 FPS for butter-smooth motion
+
+        # 4: Dock drones after arrival:
+        self.draw_static_map()
+        for d in moving_drones.values():
+            if d.current_location not in docked_groups:
+                docked_groups[d.current_location] = []
+            docked_groups[d.current_location].append(d.id)
+        for name, dock in docked_groups.items():
+            zone = self.map_graph.get_zones().get(name)
+            if zone:
+                for d_idx, drone in enumerate(dock, 1):
+                    docked_pos = self._get_dock_position(
+                            self._to_pixels(zone.x, zone.y), d_idx, len(dock))
+                    self._draw_abstract_drone(docked_pos, drone)
+        pygame.display.flip()

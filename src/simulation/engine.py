@@ -1,5 +1,5 @@
 from typing import Dict, Tuple
-from src.models import Drone, Map, Connection
+from src.models import Drone, Map, Connection, DroneStatus
 from .pathfinder import PathFinder
 
 
@@ -69,16 +69,24 @@ class SimulationEngine():
         self._turn += 1
         for d in self._drones.values():
             print(f"{d.id} Path:", d.path)
-            if len(d.path):
+            if len(d.path) and d.status is not "delivered":
                 if d.path[0][1] == self._turn:
                     # Drone arrive at new node:
+                    if d.path[0][0] == d.current_location:
+                        d.status = DroneStatus.WAITING
+                    else:
+                        d.status = DroneStatus.MOVING
                     d.current_location = d.path.pop(0)[0]
+
                 elif d.path[0][1] == self._turn + 1:
                     # Drone in transit to restricted zone:
                     d.current_location = None
+                    d.status = DroneStatus.IN_TRANSIT
                 else:
                     # Houston, we have a problem:
                     raise ValueError("Drone with path node in the past!")
+            else:
+                d.status = DroneStatus.DELIVERED
 
     def calculate_all_occupancies(self) -> Dict[str, int]:
         return {z: sum(z == d.current_location for d in self._drones.values())

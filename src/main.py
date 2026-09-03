@@ -61,7 +61,7 @@ class Application:
 
         # 5. Closing
         while pygame.get_init() and pygame.display.get_surface() is not None:
-            window_view.draw(self.engine.get_drones())
+            window_view.draw_static_map(self.engine.get_drones())
             clock.tick(6)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:

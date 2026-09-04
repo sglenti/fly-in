@@ -142,21 +142,6 @@ class WindowRenderer:
             # 3. Render Original Text
             text_surf = self.font.render(zone.name, True, text_color)
             self.screen.blit(text_surf, (pos[0] - (len(zone.name) / 2) * 5, pos[1] + 20))
-
-        """
-        # 3. Draw Drones
-        for drone in drones.values():
-            location = self.map_graph.get_zones().get(drone.current_location, None)
-            if location:
-                pos = self._to_pixels(location.x, location.y)
-                self._draw_abstract_drone(pos, drone.id)
-                rect = (pos[0] - 10, pos[1] - 10, 20, 20)
-                pygame.draw.rect(self.screen, get_rgb("black"), rect)
-                text_surf = self.font.render(drone.id, True, text_color)
-                text_rect = text_surf.get_rect()
-                text_rect.center = (pos[0], pos[1])
-                self.screen.blit(text_surf, text_rect)
-        """
         pygame.display.flip()
 
     def draw_animated_turn(
@@ -273,7 +258,7 @@ class WindowRenderer:
                     # Draw the drone at this interpolated pixel position
                     self._draw_abstract_drone(current_pixel_pos, drone.id)
 
-            # 6. Draw docked drones
+            # 6. Draw docked (waiting) drones
             for name, dock in docked_groups.items():
                 zone = self.map_graph.get_zones().get(name)
                 if zone:
@@ -282,20 +267,22 @@ class WindowRenderer:
                                 self._to_pixels(zone.x, zone.y), d_idx, len(dock))
                         self._draw_abstract_drone(docked_pos, drone)
             pygame.display.flip()
-            clock.tick(60) # Keep it locked at 60 FPS for butter-smooth motion
+            clock.tick(60)  # Keep it at 60 FPS for smooth animation
 
+        # 4: Dock drones after arrival:
+        self.draw_static_map()
+        # Transiting drones with location are arriving this turn:
         for d_id, drone in in_transit.items():
             if drone.current_location:
                 if drone.current_location not in docked_groups:
                     docked_groups[drone.current_location] = []
                 docked_groups[drone.current_location].append(d_id)
-        
-        # 4: Dock drones after arrival:
-        self.draw_static_map()
+        # Moving drones get docked by the end of turn:
         for d in moving_drones.values():
             if d.current_location not in docked_groups:
                 docked_groups[d.current_location] = []
             docked_groups[d.current_location].append(d.id)
+        # Docked drones displaying:
         for name, dock in docked_groups.items():
             zone = self.map_graph.get_zones().get(name)
             if zone:
@@ -305,6 +292,7 @@ class WindowRenderer:
                     docked_pos = self._get_dock_position(
                             self._to_pixels(zone.x, zone.y), d_idx, len(dock))
                     self._draw_abstract_drone(docked_pos, drone)
+        # Drones still in transit have to stay in the middle of the link:
         for d_id, drone in in_transit.items():
             start_zone_name = self.prev_drones_pos.get(d_id)
             target_zone_name = drone.path[0][0]

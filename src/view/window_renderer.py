@@ -1,7 +1,7 @@
 import pygame
 import math
 from rich.color import Color
-from src.models import Map, Drone, DroneStatus
+from src.models import Map, Drone, DroneStatus, Connection
 from typing import Optional, Dict, Tuple
 
 
@@ -163,10 +163,20 @@ class WindowRenderer:
             self,
             drones: Dict[str, Drone],
             clock: pygame.time.Clock) -> None:
+
+        def adjust_t(conn: Connection) -> float:
+            link_index = parallel_moves[conn]
+            parallel_moves[conn] += 1
+            delay_factor = link_index * 0.15 # 15% delay per drone behind the leader
+            # Adjust t for serial movements:
+            t = max(0.0, min(1.0, (base_t - delay_factor) / (1.0 - delay_factor)))
+            return t
+
         # 1. Categorize drones ONCE at the start of the turn animation
         docked_groups: Dict[str, list[str]] = {}
-        moving_drones = {}
-        in_transit = {}
+        moving_drones: Dict[str, Drone] = {}
+        in_transit: Dict[str, Drone] = {}
+        parallel_moves: Dict[Connection, int] = {}
 
         for d_id, drone in drones.items():
             if drone.status == DroneStatus.WAITING or drone.status == DroneStatus.DELIVERED:
@@ -187,7 +197,10 @@ class WindowRenderer:
         # 3. Animation sub-loop (e.g., 30 frames for the turn transition)
         frames = 30
         for frame in range(frames + 1):
-            t = frame / frames  # Progress from 0.0 (start of turn) to 1.0 (end of turn)
+            base_t = frame / frames  # Progress from 0.0 (start of turn) to 1.0 (end of turn)
+            for c in self.map_graph.get_conn_list():
+                if c.max_link_capacity > 1:
+                    parallel_moves[c] = 0
             
             # Handle window close events during animation so it doesn't feel frozen
             for event in pygame.event.get():
@@ -204,6 +217,13 @@ class WindowRenderer:
                         d_id, drone.current_location)
                 target_zone_name = drone.current_location
                 
+                # If there are multiple drones moving along this link, stagger them:
+                conn = self.map_graph.get_connection(start_zone_name, target_zone_name)
+                if conn in parallel_moves:
+                    t = adjust_t(conn)
+                else:
+                    t = base_t
+
                 # Get pixel coordinates for start and target zones
                 z_start = self.map_graph.get_zones().get(start_zone_name)
                 z_target = self.map_graph.get_zones().get(target_zone_name)
@@ -227,6 +247,13 @@ class WindowRenderer:
                 else:
                     start_zone_name = self.prev_drones_pos.get(d_id)
                     target_zone_name = drone.current_location
+                
+                # If there are multiple drones moving along this link, stagger them:
+                conn = self.map_graph.get_connection(start_zone_name, target_zone_name)
+                if conn in parallel_moves:
+                    t = adjust_t(conn)
+                else:
+                    t = base_t
 
                 # Get pixel coordinates for start and target zones
                 z_start = self.map_graph.get_zones().get(start_zone_name)

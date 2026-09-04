@@ -68,7 +68,7 @@ class SimulationEngine():
     def process_turn(self) -> None:
         self._turn += 1
         for d in self._drones.values():
-            print(f"{d.id} Path:", d.path)
+            # print(f"{d.id} Path:", d.path)
             if len(d.path) and d.status != "delivered":
                 if d.path[0][1] == self._turn:
                     # Drone arrive at new node:

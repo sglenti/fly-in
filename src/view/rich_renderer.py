@@ -1,6 +1,8 @@
 from rich.console import Console
+from rich.layout import Layout
 from rich.table import Table
 from rich.live import Live
+from rich.panel import Panel
 from src.models import Map, Drone
 from typing import Dict
 
@@ -10,10 +12,21 @@ class ConsoleRenderer:
         self._console = Console()
         self.map_graph = map_graph
         self._live: Live = None
+        self._layout = Layout()
+        self.log_history = []
+        self._layout.split_column(
+            Layout(name="upper", size=(len(self.map_graph.get_zones()) + 5)),
+            Layout(name="lower")
+        )
     
     def start_session(self) -> None:
         """Starts the live terminal display session."""
-        self._live = Live(auto_refresh=False)
+        # Initial empty table:
+        table = self.render_map_info(0, {})
+        self._layout["upper"].update(table)
+        self._layout["lower"].update(Panel("Simulation starting...", title="Turn Log"))
+        self._live = Live(self._layout, console=self._console,
+                auto_refresh=False)
         self._live.start()
 
     def end_session(self) -> None:
@@ -21,13 +34,26 @@ class ConsoleRenderer:
         if self._live:
             self._live.stop()
 
+    def print_line(self, turn: int, occupancy_map) -> None:
+        # self._console.print(f"Turn {turn}:", occupancy_map)
+        # self._live.refresh()
+        # return
+        move_log_string = f"Turn {turn}: {occupancy_map}"
+        self.log_history.append(f"Turn {turn}: {move_log_string}")
+        recent_logs = "\n".join(self.log_history)  # Last 10 lines
+        self._layout["lower"].update(
+                Panel(recent_logs, title="Turn Log", border_style="blue")
+                )
+        self._live.refresh()
+
+
     def render_turn(self, turn: int, drones: Dict[str, Drone]) -> None:
         """Updates the table in place without breaking headless logic."""
-        # table = self._generate_table(turn, drones)
         table = self.render_map_info(turn, drones)
         # Update what the Live display is showing
         if self._live:
-            self._live.update(table)
+            # self._live.update(table)
+            self._layout["upper"].update(table)
             self._live.refresh()
         else:
             self._console.print(table)

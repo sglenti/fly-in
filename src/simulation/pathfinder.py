@@ -42,8 +42,8 @@ class PathFinder():
                     parent[neighbor] = current_node
                     heapq.heappush(priority_queue, (distances[neighbor], neighbor))
 
-        print("Distances dict:", distances)
-        print("Parents dict:", parent)
+        # print("Distances dict:", distances)
+        # print("Parents dict:", parent)
         return parent
 
     def time_dijkstra(

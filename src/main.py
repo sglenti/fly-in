@@ -48,7 +48,7 @@ class Application:
             occupancy_map = self.engine.calculate_all_occupancies()
             # window_view.draw_animated_turn(self.engine.get_drones(), clock)
             console_view.render_turn(self.engine.get_turn(), self.engine.get_drones())
-            console_view.print_line(self.engine.get_turn(), occupancy_map)
+            console_view.print_line(self.engine.get_turn(), self.engine.get_turn_moves())
 
             if (occupancy_map[self.map_graph.get_end()] ==
                     self.engine.get_nb_drones()):

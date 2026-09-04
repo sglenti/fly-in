@@ -1,4 +1,4 @@
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
 from src.models import Drone, Map, Connection, DroneStatus
 from .pathfinder import PathFinder
 
@@ -13,6 +13,7 @@ class SimulationEngine():
         self._reservations: Dict[Tuple[str, int], int] = {}
         self._link_res: Dict[Tuple[Connection, int], int] = {}
         self._nb_drones: int 
+        self._turn_moves: List[str]
 
     def register_drone(self, drone: Drone) -> None:
         self._drones[drone.id] = drone
@@ -22,6 +23,9 @@ class SimulationEngine():
 
     def get_nb_drones(self) -> int:
         return self._nb_drones
+
+    def get_turn_moves(self) -> List[str]:
+        return self._turn_moves
 
     def get_drones(self) -> Dict[str, Drone]:
         return self._drones
@@ -67,9 +71,10 @@ class SimulationEngine():
 
     def process_turn(self) -> None:
         self._turn += 1
+        self._turn_moves = []
         for d in self._drones.values():
             # print(f"{d.id} Path:", d.path)
-            if len(d.path) and d.status != "delivered":
+            if len(d.path) and d.status != DroneStatus.DELIVERED:
                 if d.path[0][1] == self._turn:
                     # Drone arrive at new node:
                     if d.path[0][0] == d.current_location:
@@ -79,11 +84,16 @@ class SimulationEngine():
                     else:
                         d.status = DroneStatus.MOVING
                     d.current_location = d.path.pop(0)[0]
+                    if d.status != DroneStatus.WAITING:
+                        self._turn_moves.append(f"{d.id}-{d.current_location}")
 
                 elif d.path[0][1] == self._turn + 1:
                     # Drone in transit to restricted zone:
+                    end1 = d.current_location
+                    end2 = d.path[0][0]
                     d.current_location = None
                     d.status = DroneStatus.IN_TRANSIT
+                    self._turn_moves.append(f"{d.id}-{end1}-{end2}")
                 else:
                     # Houston, we have a problem:
                     raise ValueError("Drone with path node in the past!")

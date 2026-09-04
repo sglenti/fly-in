@@ -4,7 +4,7 @@ from rich.table import Table
 from rich.live import Live
 from rich.panel import Panel
 from src.models import Map, Drone
-from typing import Dict
+from typing import Dict, List
 
 
 class ConsoleRenderer:
@@ -34,13 +34,13 @@ class ConsoleRenderer:
         if self._live:
             self._live.stop()
 
-    def print_line(self, turn: int, occupancy_map) -> None:
+    def print_line(self, turn: int, moves: List[str]) -> None:
         # self._console.print(f"Turn {turn}:", occupancy_map)
         # self._live.refresh()
         # return
-        move_log_string = f"Turn {turn}: {occupancy_map}"
-        self.log_history.append(f"Turn {turn}: {move_log_string}")
-        recent_logs = "\n".join(self.log_history)  # Last 10 lines
+        move_log_string = f"Turn {turn}: {' '.join(moves)}"
+        self.log_history.append(move_log_string)
+        recent_logs = "\n".join(self.log_history[-15:])  # Last 10 lines
         self._layout["lower"].update(
                 Panel(recent_logs, title="Turn Log", border_style="blue")
                 )

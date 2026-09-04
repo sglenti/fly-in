@@ -18,8 +18,8 @@ class ConsoleRenderer:
         self._layout = Layout()
         self.log_history = []
         self._layout.split_column(
-            # Layout(name="upper", size=(len(self.map_graph.get_zones()) + 10)),
-            Layout(name="upper"),
+            Layout(name="upper", size=(len(self.map_graph.get_zones()) + 21)),
+            # Layout(name="upper",  ),
             Layout(name="lower")
         )
     
@@ -111,7 +111,10 @@ class ConsoleRenderer:
 
             # Find drones in this zone
             zone_drones = [d.id for d in drones.values() if d.current_location == node.name]
-            drones_str = ", ".join(f"[bold yellow]{d}[/bold yellow]" for d in zone_drones)
+            drones_str = ", ".join(
+                    f"[bold yellow]{d}[/bold yellow]" for d in zone_drones[:3])
+            if len(zone_drones) > 3:
+                drones_str += "..."
 
             table.add_row(
                 node.name,

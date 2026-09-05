@@ -18,7 +18,7 @@ class ConsoleRenderer:
         self._layout = Layout()
         self.log_history = []
         self._layout.split_column(
-            Layout(name="upper", size=(len(self.map_graph.get_zones()) + 21)),
+            Layout(name="upper", size=(len(self.map_graph.get_zones()) + 5)),
             # Layout(name="upper",  ),
             Layout(name="lower")
         )
@@ -69,6 +69,27 @@ class ConsoleRenderer:
             self._console.print(table)
 
     def render_map_info(self, turn: int, drones: Dict[str, Drone]) -> Table:
+        # 1. Get total available terminal height
+        term_height = self._console.height
+        max_zone_len = max((len(z) for z in self.map_graph.get_zones()), default=10)
+        znl = max_zone_len + 1
+
+        # 2. Reserve space for your bottom log panel (e.g., 10 rows)
+        # and table headers/borders (e.g., 5 rows)
+        reserved_space = 15
+        max_table_rows = max(5, term_height - reserved_space)
+
+        # 3. If you have more zones than max_table_rows, slice the list!
+        # (Prioritizing zones that currently have drones)
+        all_zones = list(self.map_graph.get_zones().values())
+        # Sort so zones with drones are at the top, or just take a slice
+        active_zones = [z for z in all_zones if any(
+            d.current_location == z.name for d in drones.values())]
+        inactive_zones = [z for z in all_zones if z not in active_zones]
+
+        # Combine them up to our budget limit
+        displayed_zones = (active_zones + inactive_zones)[:max_table_rows]
+
         table = Table(
             title=f"[bold cyan]Simulation Dashboard — Turn {turn}[/bold cyan]",
             box=box.ROUNDED,
@@ -76,14 +97,16 @@ class ConsoleRenderer:
             border_style="bright_blue",
             expand=True
         )
-        table.add_column("Zone", no_wrap=True, style="bold white", justify="left")
-        table.add_column("Type", no_wrap=True, justify="center")
-        table.add_column("Neighbors", no_wrap=False, style="dim", justify="left")
-        table.add_column("Max", no_wrap=True, justify="center")
+        table.add_column(
+                "Zone", no_wrap=True, style="bold white", justify="left", min_width=znl)
+        table.add_column("Type", no_wrap=True, justify="center", min_width=4)
+        table.add_column("Neighbors", no_wrap=True, style="dim", justify="left", ratio=1)
+        table.add_column("Max", no_wrap=True, justify="center", min_width=3)
         table.add_column("Drones", justify="left", width=20, no_wrap=True)
         
         # logic to loop through map._adj_list and add rows...
-        for node in self.map_graph._zones.values():
+        for node in self.map_graph.get_zones().values():
+        # for node in displayed_zones:
             neighbor_strings = []
             neighbors = {(c.end_point2 if c.end_point1 == node.name else c.end_point1):
                     c.max_link_capacity

@@ -76,11 +76,11 @@ class ConsoleRenderer:
             border_style="bright_blue",
             expand=True
         )
-        table.add_column("Zone", style="bold white", justify="left")
-        table.add_column("Type", justify="center")
-        table.add_column("Neighbors", style="dim", justify="left")
-        table.add_column("Max", justify="center")
-        table.add_column("Drones", justify="left")
+        table.add_column("Zone", no_wrap=True, style="bold white", justify="left")
+        table.add_column("Type", no_wrap=True, justify="center")
+        table.add_column("Neighbors", no_wrap=False, style="dim", justify="left")
+        table.add_column("Max", no_wrap=True, justify="center")
+        table.add_column("Drones", justify="left", width=20, no_wrap=True)
         
         # logic to loop through map._adj_list and add rows...
         for node in self.map_graph._zones.values():
@@ -100,25 +100,31 @@ class ConsoleRenderer:
 
             # Color-code zone types dynamically
             z_type = node.metadata.zone_type
+            type_string = z_type[:1].upper()
             if z_type == "restricted":
-                type_str = "[bold red]restricted[/bold red]"
-            elif z_type == "priority":
-                type_str = "[bold green]priority[/bold green]"
-            elif z_type == "blocked":
-                type_str = "[bold dim red]blocked[/bold dim red]"
+                type_line = f"[bold red]{type_string}[/bold red]"
+            elif z_type == f"priority":
+                type_line = f"[bold green]{type_string}[/bold green]"
+            elif z_type == f"blocked":
+                type_line = f"[bold dim red]{type_string}[/bold dim red]"
             else:
-                type_str = "[blue]normal[/blue]"
+                type_line = f"[blue]{type_string}[/blue]"
 
             # Find drones in this zone
             zone_drones = [d.id for d in drones.values() if d.current_location == node.name]
-            drones_str = ", ".join(
-                    f"[bold yellow]{d}[/bold yellow]" for d in zone_drones[:3])
-            if len(zone_drones) > 3:
-                drones_str += "..."
+            drones_count = len(zone_drones)
+            limit = 5
+            if drones_count <= limit:
+                drones_str = ", ".join(
+                    f"[bold yellow]{d}[/bold yellow]" for d in zone_drones[:limit])
+            else:
+                drones_str = ", ".join(
+                    f"[bold yellow]{d}[/bold yellow]" for d in zone_drones[:limit - 1])
+                drones_str += f"[yellow] (+{drones_count})[/yellow]"
 
             table.add_row(
                 node.name,
-                type_str,
+                type_line,
                 ", ".join(neighbor_strings),
                 str(node.metadata.max_drones),
                 drones_str

@@ -35,18 +35,18 @@ class Application:
 
         # 3. Prepare views:
         console_view = ConsoleRenderer(self.map_graph)
-        # window_view = WindowRenderer(self.map_graph, 75)
+        window_view = WindowRenderer(self.map_graph, 75)
         console_view.start_session()
 
         # 4. Execute simulation:
-        # window_view.draw_animated_turn(self.engine.get_drones(), clock)
+        window_view.draw_animated_turn(self.engine.get_drones(), clock)
+        console_view.render_turn(0, self.engine.get_drones())
         time.sleep(1.5)
         self.engine.start()
-        console_view.render_turn(0, self.engine.get_drones())
         while self.engine.is_running():
             self.engine.process_turn()
             occupancy_map = self.engine.calculate_all_occupancies()
-            # window_view.draw_animated_turn(self.engine.get_drones(), clock)
+            window_view.draw_animated_turn(self.engine.get_drones(), clock)
             console_view.render_turn(self.engine.get_turn(), self.engine.get_drones())
             console_view.print_line(self.engine.get_turn(), self.engine.get_turn_moves())
 
@@ -60,7 +60,7 @@ class Application:
 
         # 5. Closing
         while pygame.get_init() and pygame.display.get_surface() is not None:
-            # window_view.draw_static_map()
+            window_view.draw_static_map()
             clock.tick(6)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:

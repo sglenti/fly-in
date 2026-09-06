@@ -1,4 +1,4 @@
-from rich.console import Console
+from rich.console import Console, ConsoleOptions, RenderResult
 from rich.layout import Layout
 from rich.table import Table
 from rich.live import Live
@@ -10,6 +10,52 @@ from src.models import Map, Drone
 from typing import Dict, List
 
 
+class BottomLog:
+    def __init__(self):
+        self.messages: list[str] = []
+    def add(self, message: str) -> None:
+        self.messages.append(message)
+    def __rich_console__(
+            self,
+            console: Console,
+            options: ConsoleOptions,
+            ) -> RenderResult:
+        # These are the dimensions allocated to the lower layout region.
+        panel_width = options.max_width
+        panel_height = options.max_height
+        padding = 0
+        # Account for the Panel border and padding.
+        content_width = max(1, panel_width - 2 - padding * 2)
+        content_height = max(1, panel_height - 2 - padding * 2)
+        visual_lines: list[Text] = []
+        for message in self.messages:
+            text = Text(message)
+            # Wrap according to the actual current lower-region width.
+            visual_lines.extend(
+                    text.wrap(console, width=content_width)
+                    )
+        # Keep the bottom-most visual lines.
+        if len(visual_lines) > content_height:
+            # Keep the newest visual lines.
+            visible_lines = visual_lines[-content_height:]
+        else:
+            # Push existing lines to the bottom.
+            empty_lines = [
+                    Text()
+                    for _ in range(content_height - len(visual_lines))
+                    ]
+            visible_lines = empty_lines + visual_lines
+        
+        # visible_lines = rendered_lines[-content_height:]
+        content = Text("\n").join(visible_lines)
+        yield Panel(
+                content,
+                width=panel_width,
+                height=panel_height,
+                padding=padding,
+                )
+
+
 class ConsoleRenderer:
     def __init__(self, map_graph: Map) -> None:
         self._console = Console()
@@ -17,6 +63,7 @@ class ConsoleRenderer:
         self._live: Live = None
         self._layout = Layout()
         self.log_history = []
+        self._log = BottomLog()
     
     def start_session(self) -> None:
         """Starts the live terminal display session."""
@@ -27,7 +74,8 @@ class ConsoleRenderer:
         # Initial empty table:
         table = Table()
         self._layout["upper"].update(table)
-        self._layout["lower"].update(Panel("Simulation starting...", title="Turn Log"))
+        self._layout["lower"].update(self._log)
+        # self._layout["lower"].update(Panel("Simulation starting...", title="Turn Log"))
         self._live = Live(self._layout, console=self._console,
                 auto_refresh=False)
         self._live.start()
@@ -39,18 +87,40 @@ class ConsoleRenderer:
 
     def print_line(self, turn: int, moves: List[str]) -> None:
         move_log_string = f"Turn {turn}: {' '.join(moves)}"
+        self._log.add(move_log_string)
+        try:
+            self._live.refresh()
+        except Exception:
+            self._live.stop()
+            console.print_exception()
+            raise
+        return
+
+        lower = self._layout["lower"]
+        panel_width = lower.region.width
+        panel_height = lower.region.height
+
+        padding = 1
+        content_width = max(0, panel_width - 2 - padding * 2)
+        content_height = max(0, panel_height - 2 - padding * 2)
+
+        rendered_lines = []
+        move_log_string = f"Turn {turn}: {' '.join(moves)}"
         self.log_history.append(move_log_string)
         # Last 50 lines
         recent_logs = "\n".join(self.log_history[-50:]) 
         # Wrap in Text
-        text_obj = Text(recent_logs)
+        text_obj = Text(recent_logs, overflow="crop")
+        rendered_lines.extend(
+                 text_obj.wrap(console, width=content_width)        )
     
         # Align to bottom! This forces the panel to anchor its view to the bottom-most text,
         # meaning overflowing text gets clipped at the TOP, like a terminal.
-        bottom_aligned_logs = Align(text_obj, align="left", vertical="bottom")
+        bottom_aligned_logs = Align(rendered_lines, align="left", vertical="bottom")
         # Update log panel content:
         self._layout["lower"].update(
-                Panel(bottom_aligned_logs, title="Turn Log", border_style="blue")
+                Panel(bottom_aligned_logs, title="Turn Log", border_style="blue",
+                    )
                 )
         self._live.refresh()
 

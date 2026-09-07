@@ -67,8 +67,9 @@ class ConsoleRenderer:
     
     def start_session(self) -> None:
         """Starts the live terminal display session."""
+        upper_size = min(self._console.height - 15, len(self.map_graph.get_zones()) + 5)
         self._layout.split_column(
-            Layout(name="upper", size=(len(self.map_graph.get_zones()) + 5)),
+            Layout(name="upper", size=upper_size),
             Layout(name="lower")
         )
         # Initial empty table:
@@ -141,19 +142,20 @@ class ConsoleRenderer:
         # 2. Reserve space for your bottom log panel (e.g., 10 rows)
         # and table headers/borders (e.g., 5 rows)
         reserved_space = 15
-        max_table_rows = max(5, h - reserved_space)
+        max_table_rows = max(5, h - reserved_space) - 5
 
-        """
         # 3. If you have more zones than max_table_rows, slice the list!
         # (Prioritizing zones that currently have drones)
         all_zones = list(self.map_graph.get_zones().values())
         # Sort so zones with drones are at the top, or just take a slice
         active_zones = [z for z in all_zones if any(
             d.current_location == z.name for d in drones.values())]
-        inactive_zones = [z for z in all_zones if z not in active_zones]
         # Combine them up to our budget limit
-        displayed_zones = (active_zones + inactive_zones)[:max_table_rows]
-        """
+        if len(all_zones) > max_table_rows:
+            last_index = max(max_table_rows - 1, all_zones.index(active_zones[-1]))
+            displayed_zones = all_zones[last_index + 1 - max_table_rows:last_index + 1]
+        else:
+            displayed_zones = all_zones
 
         # Build table:
         table = Table(
@@ -171,7 +173,8 @@ class ConsoleRenderer:
         table.add_column("Drones", justify="left", width=drl, no_wrap=True)
         
         # logic to loop through map._adj_list and add rows...
-        for node in self.map_graph.get_zones().values():
+        # for node in self.map_graph.get_zones().values():
+        for node in displayed_zones:
             # for node in displayed_zones:
             neighbor_strings = []
             neighbors = {(c.end_point2 if c.end_point1 == node.name else c.end_point1):

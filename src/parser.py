@@ -79,7 +79,7 @@ class Parser():
 
         for i in range(1, nb_drones + 1):
             self._engine.register_drone(
-                Drone(id=f"D{i:02d}",
+                Drone(id=f"D{i:0{len(str(nb_drones))}d}",
                       current_location=self._map_graph.start_zone_name))
 """        
     # The Zones (name as key, object as value)

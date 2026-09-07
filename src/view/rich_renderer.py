@@ -136,8 +136,7 @@ class ConsoleRenderer:
         nb_d = len(drones) 
         d_limit = 3 if w < 100 else 5  # max number of drones shown
         max_drone_len = max((len(d) for d in drones), default=3) + 2
-        drl = (min(max_drone_len * d_limit, max(10, nb_d * max_drone_len)) - 1 - 
-                (max_drone_len - (len(str(nb_d)) + 3)))
+        drl = min(max_drone_len * d_limit, max(10, nb_d * max_drone_len)) - 1
 
         # 2. Reserve space for your bottom log panel (e.g., 10 rows)
         # and table headers/borders (e.g., 5 rows)

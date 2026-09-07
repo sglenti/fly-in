@@ -86,40 +86,29 @@ class ConsoleRenderer:
             self._live.stop()
 
     def print_line(self, turn: int, moves: List[str]) -> None:
-        move_log_string = f"Turn {turn}: {' '.join(moves)}"
-        self._log.add(move_log_string)
-        try:
-            self._live.refresh()
-        except Exception:
-            self._live.stop()
-            console.print_exception()
-            raise
-        return
-
-        lower = self._layout["lower"]
-        panel_width = lower.region.width
-        panel_height = lower.region.height
-
-        padding = 1
-        content_width = max(0, panel_width - 2 - padding * 2)
-        content_height = max(0, panel_height - 2 - padding * 2)
+        # move_log_string = f"Turn {turn}: {' '.join(moves)}"
+        # self._log.add(move_log_string)
+        # try:
+        #     self._live.refresh()
+        # except Exception:
+        #     self._live.stop()
+        #     console.print_exception()
+        #     raise
+        # return
 
         rendered_lines = []
-        move_log_string = f"Turn {turn}: {' '.join(moves)}"
+        move_log_string = f"[yellow]Turn {turn}:[/yellow] {' '.join(moves)}"
         self.log_history.append(move_log_string)
         # Last 50 lines
-        recent_logs = "\n".join(self.log_history[-50:]) 
+        recent_logs = "\n".join(reversed(self.log_history[-50:-1]
+               + [f"[bold]{move_log_string}[/bold]"])) 
         # Wrap in Text
         text_obj = Text(recent_logs, overflow="crop")
-        rendered_lines.extend(
-                 text_obj.wrap(console, width=content_width)        )
     
-        # Align to bottom! This forces the panel to anchor its view to the bottom-most text,
-        # meaning overflowing text gets clipped at the TOP, like a terminal.
-        bottom_aligned_logs = Align(rendered_lines, align="left", vertical="bottom")
+        aligned_logs = Align(recent_logs, align="left", vertical="top")
         # Update log panel content:
         self._layout["lower"].update(
-                Panel(bottom_aligned_logs, title="Turn Log", border_style="blue",
+                Panel(aligned_logs, title="Turn Log", border_style="blue",
                     )
                 )
         self._live.refresh()

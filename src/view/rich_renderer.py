@@ -134,9 +134,10 @@ class ConsoleRenderer:
         mxl = 3  # Max capacity length
         # Drones length:
         nb_d = len(drones) 
-        d_limit = 5  # max number of drones shown
+        d_limit = 3 if w < 100 else 5  # max number of drones shown
         max_drone_len = max((len(d) for d in drones), default=3) + 2
-        drl = min(max_drone_len * d_limit, max(10, nb_d * max_drone_len))
+        drl = (min(max_drone_len * d_limit, max(10, nb_d * max_drone_len)) - 1 - 
+                (max_drone_len - (len(str(nb_d)) + 3)))
 
         # 2. Reserve space for your bottom log panel (e.g., 10 rows)
         # and table headers/borders (e.g., 5 rows)
@@ -202,13 +203,16 @@ class ConsoleRenderer:
 
             # Find drones in this zone
             zone_drones = [d.id for d in drones.values() if d.current_location == node.name]
-            drones_count = len(zone_drones)
+            # Find Drones in transit
+            transit_drones = [d.id for d in drones.values() if (d.status == "in_transit" 
+                and d.path[0][0] == node.name) and d.current_location == None]
+            drones_count = len(zone_drones) + len(transit_drones)
+            drones_list = ([f"[bold yellow]{d}[/bold yellow]" for d in zone_drones] +
+                    [f"[bold grey53]{d}[/bold grey53]" for d in transit_drones])
             if drones_count <= d_limit:
-                drones_str = ", ".join(
-                    f"[bold yellow]{d}[/bold yellow]" for d in zone_drones)
+                drones_str = ", ".join(drones_list)
             else:
-                drones_str = ", ".join(
-                    f"[bold yellow]{d}[/bold yellow]" for d in zone_drones[:d_limit - 1])
+                drones_str = ", ".join(drones_list[:d_limit - 1])
                 drones_str += f"[yellow] (+{drones_count - (d_limit - 1)})[/yellow]"
 
             table.add_row(

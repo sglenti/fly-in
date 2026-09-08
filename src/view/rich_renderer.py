@@ -148,8 +148,15 @@ class ConsoleRenderer:
         # (Prioritizing zones that currently have drones)
         all_zones = list(self.map_graph.get_zones().values())
         # Sort so zones with drones are at the top, or just take a slice
-        active_zones = [z for z in all_zones if any(
-            d.current_location == z.name for d in drones.values())]
+        """
+        active_zones = [z for z in all_zones if (any(
+            d.current_location == z.name for d in drones.values())
+            or any((d.path[0][0] == z.name and d.status == "in_transit" 
+                and d.current_location == None) for d in drones.values()))]
+        """
+        active_zones = [z for z in all_zones if (any(
+            ((d.path and d.path[0][0] == z.name) or d.current_location == z.name)
+            for d in drones.values()))] 
         # Combine them up to our budget limit
         if len(all_zones) > max_table_rows:
             last_index = max(max_table_rows - 1, all_zones.index(active_zones[-1]))
@@ -207,7 +214,7 @@ class ConsoleRenderer:
             zone_drones = [d.id for d in drones.values() if d.current_location == node.name]
             # Find Drones in transit
             transit_drones = [d.id for d in drones.values() if (d.status == "in_transit" 
-                and d.path[0][0] == node.name) and d.current_location == None]
+                and d.path and d.path[0][0] == node.name) and d.current_location == None]
             drones_count = len(zone_drones) + len(transit_drones)
             drones_list = ([f"[bold yellow]{d}[/bold yellow]" for d in zone_drones] +
                     [f"[bold grey53]{d}[/bold grey53]" for d in transit_drones])

@@ -15,6 +15,7 @@ class Application:
         self.map_graph = Map()
         self.engine = SimulationEngine(self.map_graph)
         self.renderer = ConsoleRenderer(self.map_graph)
+        self.interactive = False
 
     def run(self) -> None:
         # 1. Parse and Build:
@@ -41,9 +42,19 @@ class Application:
         # 4. Execute simulation:
         window_view.draw_animated_turn(self.engine.get_drones(), clock)
         console_view.render_turn(0, self.engine.get_drones())
-        time.sleep(1.5)
+
+        # console_view.print_line(self.engine.get_turn(), [str(self.engine._link_res)])
+        
+        time.sleep(1)
         self.engine.start()
         while self.engine.is_running():
+            paused = self.interactive
+            while paused:
+                clock.tick(6)
+                for event in pygame.event.get():
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_n:
+                            paused = False
             self.engine.process_turn()
             occupancy_map = self.engine.calculate_all_occupancies()
             window_view.draw_animated_turn(self.engine.get_drones(), clock)

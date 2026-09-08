@@ -2,6 +2,7 @@ from src.models import Drone, Map, Connection
 import heapq
 import sys
 from typing import Dict
+from rich import print
 
 
 class PathFinder():
@@ -128,7 +129,7 @@ class PathFinder():
 
                 # When evaluate a next state (neighbor, arrival_time):
                 current_occupants = reservations.get(next_state, 0)
-                link_users = link_res.get((conn, current_time), 0)
+                link_users = link_res.get((conn, current_time + weight), 0)
                 zone_capacity = zones[neighbor].metadata.max_drones
                 link_capacity = conn.max_link_capacity
                 if current_occupants >= zone_capacity or link_users >= link_capacity:
@@ -155,7 +156,7 @@ class PathFinder():
                                 current_time + weight)
                             )
 
-#        print("Distances dict:", distances)
-#        print("Parents dict:", parent)
-#        print("reservations:", reservations)
+        # print("Distances dict:", distances)
+        # print("Parents dict:", parent)
+        # print("reservations:", reservations)
         return reconstruct_path(parent, (src, time), current_state)

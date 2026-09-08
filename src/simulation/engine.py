@@ -56,7 +56,7 @@ class SimulationEngine():
             
                 conn = self._map.get_connection(current_pos, target_node)
                 if conn:
-                    edge = (conn, time_step - 1)
+                    edge = (conn, time_step)
                     self._link_res[edge] = self._link_res.get(edge, 0) + 1
                 current_pos = target_node
 

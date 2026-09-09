@@ -2,7 +2,6 @@ from src.models import Drone, Map, Connection, Zone
 import heapq
 import sys
 from typing import Dict, List, Tuple, Set
-from rich import print
 
 
 class PathFinder():
@@ -34,7 +33,7 @@ class PathFinder():
         # Process the queue until all reachable vertices are finalized
         while priority_queue:
             current_dist, current_node = heapq.heappop(priority_queue)
-            
+
             # If this distance not the latest shortest one, skip it
             if current_dist > distances[current_node]:
                 continue
@@ -43,12 +42,14 @@ class PathFinder():
             for conn in adj_list[current_node]:
                 neighbor = (conn.end_point2 if conn.end_point2 != current_node
                             else conn.end_point1)
-                weight = 2 if zones[neighbor].metadata.zone_type == "restricted" else 1
+                weight = (2 if zones[neighbor].
+                          metadata.zone_type == "restricted" else 1)
                 # If we found a shorter path to v through u, update it
                 if distances[current_node] + weight < distances[neighbor]:
                     distances[neighbor] = distances[current_node] + weight
                     parent[neighbor] = current_node
-                    heapq.heappush(priority_queue, (distances[neighbor], neighbor))
+                    heapq.heappush(
+                            priority_queue, (distances[neighbor], neighbor))
 
         # print("Distances dict:", distances)
         # print("Parents dict:", parent)
@@ -73,18 +74,18 @@ class PathFinder():
             # If the goal was never reached, return an empty path
             if current not in parent and current != start:
                 return []
-                
+
             while current in parent:
                 path.append(current)
                 current = parent[current]
-            
-            path.reverse() # Since we walked backwards from goal to start
+
+            path.reverse()
             return path
 
         if not drone.current_location:
             return []
         zones: Dict[str, Zone] = map_graph.get_zones()
-        connections: List[Connection] = map_graph.get_conn_list()
+        # connections: List[Connection] = map_graph.get_conn_list()
         adj_list: Dict[str, List[Connection]] = map_graph.get_adj_list()
         src: str = drone.current_location
 
@@ -100,9 +101,10 @@ class PathFinder():
 
         # Process the queue until all reachable vertices are finalized
         while priority_queue:
-            cost, priority, current_node, current_time = heapq.heappop(priority_queue)
+            cost, priority, current_node, current_time = heapq.heappop(
+                    priority_queue)
             current_state = (current_node, current_time)
-            
+
             # If this distance not the latest shortest one, skip it
             if cost > distances[(current_node, current_time)]:
                 continue
@@ -133,9 +135,10 @@ class PathFinder():
                 # If neighbor is blocked, just skip it
                 if zones[neighbor].metadata.zone_type == "blocked":
                     continue
-                weight = 2 if zones[neighbor].metadata.zone_type == "restricted" else 1
+                weight = (2 if zones[neighbor].
+                          metadata.zone_type == "restricted" else 1)
                 next_state = (neighbor, current_time + weight)
-                
+
                 if next_state in visited:
                     continue
 
@@ -144,13 +147,14 @@ class PathFinder():
                 link_users = link_res.get((conn, current_time + weight), 0)
                 zone_capacity = zones[neighbor].metadata.max_drones
                 link_capacity = conn.max_link_capacity
-                if current_occupants >= zone_capacity or link_users >= link_capacity:
+                if (current_occupants >= zone_capacity or
+                        link_users >= link_capacity):
                     # Too crowded! This state is truly blocked.
                     continue
 
-                # If not visited, treat as is: 
+                # If not visited, treat as is:
                 if next_state not in distances:
-                    distances[next_state] = sys.maxsize 
+                    distances[next_state] = sys.maxsize
 
                 # If we found a shorter path to v through u, update it
                 if distances[current_state] + weight < distances[next_state]:
@@ -158,13 +162,13 @@ class PathFinder():
                     parent[next_state] = current_state
                     visited.add(next_state)
                     new_priority = (priority - 1 if zones[neighbor].metadata.
-                            zone_type == "priority" else priority)
+                                    zone_type == "priority" else priority)
                     heapq.heappush(
                             priority_queue,
                             (
-                                distances[next_state], 
-                                new_priority, 
-                                neighbor, 
+                                distances[next_state],
+                                new_priority,
+                                neighbor,
                                 current_time + weight)
                             )
 

@@ -8,9 +8,9 @@ from typing import Optional, Dict, Tuple
 def get_rgb(color_name: Optional[str]) -> tuple[int, int, int]:
     if not color_name:
         return (128, 128, 128)
-        
+
     clean_name = color_name.lower().strip()
-    
+
     # Try the raw name first (e.g. "red", "cyan", or a hex code like "#FFA500")
     # Then try appending "1" if it fails (like "orange" -> "orange1")
     for variant in [clean_name, f"{clean_name}1"]:
@@ -18,7 +18,7 @@ def get_rgb(color_name: Optional[str]) -> tuple[int, int, int]:
             return Color.parse(variant).get_truecolor()
         except Exception:
             continue
-            
+
     # Ultimate fallback if neither works
     return (128, 128, 128)
 
@@ -28,17 +28,22 @@ class WindowRenderer:
         pygame.init()
         self.map_graph = map_graph
         self.scale = scale
-        self.x_max: int = max([n.x for n in self.map_graph.get_zones().values()])
-        self.x_min: int = min([n.x for n in self.map_graph.get_zones().values()])
-        self.y_max: int = max([n.y for n in self.map_graph.get_zones().values()])
-        self.y_min: int = min([n.y for n in self.map_graph.get_zones().values()])
+        self.x_max: int = max(
+                [n.x for n in self.map_graph.get_zones().values()])
+        self.x_min: int = min(
+                [n.x for n in self.map_graph.get_zones().values()])
+        self.y_max: int = max(
+                [n.y for n in self.map_graph.get_zones().values()])
+        self.y_min: int = min(
+                [n.y for n in self.map_graph.get_zones().values()])
         self.x_offset = scale - self.x_min * scale
         self.y_offset = scale - self.y_min * scale
-        # Simple window sizing based on your map bounds would be an improvement later
+        # Simple window sizing based on map bounds
         self.screen = pygame.display.set_mode(self._set_size())
         self.font = pygame.font.SysFont("Arial", 10)
-        self.curr_drones_pos: Dict[str, str] = {} # drone_id -> zone_name
-        self.prev_drones_pos: Dict[str, str] = {} # drone_id -> zone_name
+        # drone_id -> zone_name:
+        self.curr_drones_pos: Dict[str, str] = {}
+        self.prev_drones_pos: Dict[str, str] = {}
 
     def _set_size(self) -> Tuple[float, float]:
         return ((self.x_max - self.x_min + 2) * self.scale,
@@ -49,22 +54,26 @@ class WindowRenderer:
         return (x * self.scale + self.x_offset, y * self.scale + self.y_offset)
 
     def _lerp(self, p1: tuple[int, int], p2: tuple[int, int], t: float
-            )-> tuple[int, int]:
+              ) -> tuple[int, int]:
         x1, y1 = p1
         x2, y2 = p2
         return (round(x1 + (x2 - x1) * t), round(y1 + (y2 - y1) * t))
 
-    def _draw_abstract_drone(self, center: Tuple[int, int], drone_id: str, size:int = 16) -> None:
+    def _draw_abstract_drone(
+            self,
+            center: Tuple[int, int],
+            drone_id: str,
+            size: int = 16) -> None:
         cx, cy = center
         color = get_rgb("black")
         surface = self.screen
-        
+
         # 1. Draw the central square body
         # We use a rect centered at (cx, cy)
         body_rect = pygame.Rect(0, 0, size, size)
         body_rect.center = (cx, cy)
         pygame.draw.rect(surface, color, body_rect)
-        
+
         # Optional: Draw a dark outline on the body so it pops
         # pygame.draw.rect(surface, get_rgb("silver"), body_rect, 1)
 
@@ -72,8 +81,8 @@ class WindowRenderer:
         # Calculate offset distance from center to corners
         offset = size // 2
         rotor_radius = 4
-        rotor_color = get_rgb("black") # Silver/White rotors
-        
+        rotor_color = get_rgb("black")
+
         # Top-Left, Top-Right, Bottom-Left, Bottom-Right
         corners = [
             (cx - offset, cy - offset),
@@ -81,12 +90,13 @@ class WindowRenderer:
             (cx - offset, cy + offset),
             (cx + offset, cy + offset)
         ]
-        
+
         for corner in corners:
             pygame.draw.circle(surface, rotor_color, corner, rotor_radius)
             # Optional outline for the rotors
-            pygame.draw.circle(surface, get_rgb("grey15"), corner, rotor_radius, 1)
-        
+            pygame.draw.circle(
+                    surface, get_rgb("grey15"), corner, rotor_radius, 1)
+
         # 3. Drone label
         text_surf = self.font.render(drone_id, True, get_rgb("white"))
         text_rect = text_surf.get_rect()
@@ -102,11 +112,11 @@ class WindowRenderer:
             ) -> tuple[int, int]:
         if total_drones <= 1:
             return center
-            
+
         cx, cy = center
         # Calculate angle for this specific drone
         angle = (2 * math.pi * index) / total_drones
-        
+
         # Offset from center
         x = cx + radius * math.cos(angle)
         y = cy + radius * math.sin(angle)
@@ -120,28 +130,33 @@ class WindowRenderer:
             # We need to look up the actual zones to get their coordinates
             z1 = self.map_graph.get_zones()[conn.end_point1]
             z2 = self.map_graph.get_zones()[conn.end_point2]
-            pygame.draw.line(self.screen, (get_rgb("white")), 
-                             self._to_pixels(z1.x, z1.y), 
+            pygame.draw.line(self.screen, (get_rgb("white")),
+                             self._to_pixels(z1.x, z1.y),
                              self._to_pixels(z2.x, z2.y), 2)
 
         # 2. Draw Zones (Nodes)
         for zone in self.map_graph.get_zones().values():
             pos = self._to_pixels(zone.x, zone.y)
             # Draw circle
-            pygame.draw.circle(self.screen, get_rgb(zone.metadata.color), pos, 20)
+            pygame.draw.circle(
+                    self.screen, get_rgb(zone.metadata.color), pos, 20)
             # Draw label
             # 1. Prepare your colors
             text_color = (255, 255, 255)
-            shadow_color = (0, 0, 0) # Black shadow
+            shadow_color = (0, 0, 0)  # Black shadow
 
             # 2. Render Shadow
             shadow_surf = self.font.render(zone.name, True, shadow_color)
             self.screen.blit(
-                    shadow_surf, (pos[0] - (len(zone.name) / 2) * 5 + 1, pos[1] + 20 + 1))
+                    shadow_surf, (
+                        pos[0] - (len(zone.name) / 2) * 5 + 1, pos[1] + 20 + 1
+                        )
+                    )
 
             # 3. Render Original Text
-            text_surf = self.font.render(zone.name, True, text_color)
-            self.screen.blit(text_surf, (pos[0] - (len(zone.name) / 2) * 5, pos[1] + 20))
+            txtsurf = self.font.render(zone.name, True, text_color)
+            self.screen.blit(
+                    txtsurf, (pos[0] - (len(zone.name) / 2) * 5, pos[1] + 20))
         pygame.display.flip()
 
     def draw_animated_turn(
@@ -152,9 +167,11 @@ class WindowRenderer:
         def adjust_t(conn: Connection) -> float:
             link_index = parallel_moves[conn]
             parallel_moves[conn] += 1
-            delay_factor = link_index * 0.15 # 15% delay per drone behind the leader
+            # 15% delay per drone behind the leader
+            delay_factor = link_index * 0.15
             # Adjust t for serial movements:
-            t = max(0.0, min(1.0, (base_t - delay_factor) / (1.0 - delay_factor)))
+            t = max(0.0, min(
+                1.0, (base_t - delay_factor) / (1.0 - delay_factor)))
             return t
 
         # 1. Categorize drones ONCE at the start of the turn animation
@@ -165,7 +182,8 @@ class WindowRenderer:
 
         for d_id, drone in drones.items():
             loc = drone.current_location
-            if loc and (drone.status == DroneStatus.WAITING or drone.status == DroneStatus.DELIVERED):
+            if loc and (drone.status == DroneStatus.WAITING or
+                        drone.status == DroneStatus.DELIVERED):
                 if loc not in docked_groups:
                     docked_groups[loc] = []
                 docked_groups[loc].append(d_id)
@@ -173,39 +191,41 @@ class WindowRenderer:
                 in_transit[d_id] = drone
             else:
                 moving_drones[d_id] = drone
-        
+
         # 2. Update positions: Old becomes current, Current becomes new targets
         self.prev_drones_pos = self.curr_drones_pos.copy()
         self.curr_drones_pos = {d_id: d.current_location for d_id,
-                d in drones.items() if d.current_location}
+                                d in drones.items() if d.current_location}
 
         # 3. Animation sub-loop (e.g., 30 frames for the turn transition)
         frames = 30
         for frame in range(frames + 1):
-            base_t = frame / frames  # Progress from 0.0 (start of turn) to 1.0 (end of turn)
+            # Progress from 0.0 (start of turn) to 1.0 (end of turn)
+            base_t = frame / frames
             for c in self.map_graph.get_conn_list():
                 if c.max_link_capacity > 1:
                     parallel_moves[c] = 0
-            
-            # Handle window close events during animation so it doesn't feel frozen
+
+            # Handle window close events during animation
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
-                    
+
             # Clear screen and draw static map (zones and connections)
             self.draw_static_map()
-            
+
             # 4. Draw drones at interpolated positions
             for d_id, drone in moving_drones.items():
                 start_zone_name = self.prev_drones_pos.get(
                         d_id, drone.current_location)
                 target_zone_name = drone.current_location
-                
+
                 if not start_zone_name or not target_zone_name:
                     continue
-                
-                # If there are multiple drones moving along this link, stagger them:
-                conn = self.map_graph.get_connection(start_zone_name, target_zone_name)
+
+                # If there are multiple drones moving, stagger them:
+                conn = self.map_graph.get_connection(
+                        start_zone_name, target_zone_name)
                 if conn in parallel_moves:
                     t = adjust_t(conn)
                 else:
@@ -234,11 +254,12 @@ class WindowRenderer:
                 else:
                     start_zone_name = self.prev_drones_pos.get(d_id)
                     target_zone_name = drone.current_location
-                
+
                 if not start_zone_name or not target_zone_name:
                     continue
-                # If there are multiple drones moving along this link, stagger them:
-                conn = self.map_graph.get_connection(start_zone_name, target_zone_name)
+                # If there are multiple drones moving, stagger them:
+                conn = self.map_graph.get_connection(
+                        start_zone_name, target_zone_name)
                 if conn in parallel_moves:
                     t = adjust_t(conn)
                 else:
@@ -268,7 +289,7 @@ class WindowRenderer:
                 if zone:
                     for d_idx, dro in enumerate(dock, 1):
                         docked_pos = self._get_dock_position(
-                                self._to_pixels(zone.x, zone.y), d_idx, len(dock))
+                            self._to_pixels(zone.x, zone.y), d_idx, len(dock))
                         self._draw_abstract_drone(docked_pos, dro)
             pygame.display.flip()
             clock.tick(60)  # Keep it at 60 FPS for smooth animation
@@ -293,7 +314,7 @@ class WindowRenderer:
             if zone:
                 for d_idx, dro in enumerate(dock, 1):
                     if dro in in_transit:
-                        in_transit.pop(dro)                        
+                        in_transit.pop(dro)
                     docked_pos = self._get_dock_position(
                             self._to_pixels(zone.x, zone.y), d_idx, len(dock))
                     self._draw_abstract_drone(docked_pos, dro)
@@ -305,7 +326,7 @@ class WindowRenderer:
                 continue
             z_start = self.map_graph.get_zones().get(start_zone_name)
             z_target = self.map_graph.get_zones().get(target_zone_name)
-            
+
             if z_start and z_target:
                 p1 = self._to_pixels(z_start.x, z_start.y)
                 p2 = self._to_pixels(z_target.x, z_target.y)

@@ -1,4 +1,4 @@
-from models import Map, Zone, Connection, ZoneMetadata, ZoneType, Drone
+from models import Map, Zone, Connection, ZoneMetadata, Drone
 from simulation import SimulationEngine
 from typing import Dict, Any, List
 
@@ -13,7 +13,8 @@ class Parser():
         def create_zone(data: str) -> Zone:
             values = data.split(" ", 3)
             if len(values) < 3:
-                raise SyntaxError(f"Wrong syntax for map file, hub {values[0]}")
+                raise SyntaxError(
+                        f"Wrong syntax for map file, hub {values[0]}")
             metadata = None
             if len(values) == 4:
                 items = values[3].strip("[]").split()
@@ -29,16 +30,19 @@ class Parser():
                 if 'zone' in params:
                     params['zone_type'] = params.pop('zone')
                 metadata = ZoneMetadata(**params)
-            return Zone(name=values[0], x=values[1], y=values[2], metadata=metadata)
+            return Zone(
+                name=values[0], x=values[1], y=values[2], metadata=metadata)
 
         def create_connection(data: str) -> Connection:
             values: List[str] = data.split()
             if len(values) > 2:
-                raise SyntaxError(f"Wrong syntax for map file, conn {values[0]}")
+                raise SyntaxError(
+                        f"Wrong syntax for map file, conn {values[0]}")
             hubs: List[str] = values[0].split("-")
             if len(hubs) != 2:
                 raise ValueError(f"Wrong connection format: {values[0]}")
-            params: Dict[str, str|int] = {"end_point1": hubs[0], "end_point2": hubs[1]}
+            params: Dict[str, str | int] = {
+                    "end_point1": hubs[0], "end_point2": hubs[1]}
             if len(values) == 2:
                 key, value = values[1].strip("[]").split("=")
                 params[key] = int(value)
@@ -46,16 +50,16 @@ class Parser():
 
         with open(file_name) as file:
             content = [line.strip() for line in file if line.strip()
-                    and not line.startswith('#')]
+                       and not line.startswith('#')]
         if not content:
             raise SyntaxError("Empty map file")
-        
+
         first_line = content[0].split(": ")
         if first_line[0] == "nb_drones":
             nb_drones = int(first_line[1])
             self._engine.set_nb_drones(nb_drones)
         else:
-            raise SyntaxError(f"Wrong syntax for map file, line 1")
+            raise SyntaxError("Wrong syntax for map file, line 1")
 
         for n, line in enumerate(content[1:], 2):
             parsed_line = line.split(": ")
@@ -71,7 +75,8 @@ class Parser():
                         self._map_graph.set_end_zone(zone)
                 else:
                     print(parsed_line)
-                    raise SyntaxError(f"Wrong syntax for map file, hub line {n}")
+                    raise SyntaxError(
+                            f"Wrong syntax for map file, hub line {n}")
             elif parsed_line[0].startswith("connection"):
                 conn = create_connection(parsed_line[1])
                 self._map_graph.add_connection(conn)
@@ -82,7 +87,9 @@ class Parser():
             self._engine.register_drone(
                 Drone(id=f"D{i:0{len(str(nb_drones))}d}",
                       current_location=self._map_graph.start_zone_name))
-"""        
+
+
+"""
     # The Zones (name as key, object as value)
     zones_to_add = {
         "start": Zone(name="start", x=0, y=0),

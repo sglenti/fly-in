@@ -34,10 +34,15 @@ class Map():
 
     def set_start_zone(self, zone: Zone) -> None:
         if self._start_zone is not None:
-            raise ValueError(f"Map already has a start zone: {self._start_zone.name}")
+            raise ValueError(
+                    f"Map already has a start zone: {self._start_zone.name}")
         self._start_zone = zone
 
-    def get_connection(self, node1: str | None, node2: str | None) -> Optional[Connection]:
+    def get_connection(
+            self,
+            node1: str | None,
+            node2: str | None
+            ) -> Optional[Connection]:
         if node1 and node2 and node1 != node2:
             for conn in self._adj_list.get(node1, []):
                 if conn.end_point1 == node2 or conn.end_point2 == node2:
@@ -46,7 +51,8 @@ class Map():
 
     def set_end_zone(self, zone: Zone) -> None:
         if self._end_zone is not None:
-            raise ValueError(f"Map already has an end zone: {self._end_zone.name}")
+            raise ValueError(
+                    f"Map already has an end zone: {self._end_zone.name}")
         self._end_zone = zone
 
     def add_zone(self, zone: Zone) -> None:
@@ -61,23 +67,25 @@ class Map():
 
     def initialize_graph(self) -> None:
         if self._start_zone == self._end_zone:
-            raise ValueError("Start and End hubs must differ!") 
+            raise ValueError("Start and End hubs must differ!")
         # fill adj_list (if duplicates, raise error)
-        processed_pairs: Set[Tuple[str,str]] = set()
+        processed_pairs: Set[Tuple[str, str]] = set()
 
         for conn in self._connections:
             if (conn.end_point1 not in self._zones
                     or conn.end_point2 not in self._zones):
-                raise ValueError("Invalid hub name in connection "
+                raise ValueError(
+                    "Invalid hub name in connection "
                     f"{conn.end_point1}-{conn.end_point2}")
             if conn.end_point1 == conn.end_point2:
-                raise ValueError("Connection source and target must differ: "
+                raise ValueError(
+                    "Connection source and target must differ: "
                     f"{conn.end_point1}-{conn.end_point2}")
 
             pair = tuple(sorted((conn.end_point1, conn.end_point2)))
             if pair in processed_pairs:
                 raise ValueError("Duplicated connection: "
-                    f"{conn.end_point1}-{conn.end_point2}")
+                                 f"{conn.end_point1}-{conn.end_point2}")
 
             if conn.end_point1 not in self._adj_list:
                 self._adj_list[conn.end_point1] = []
@@ -95,8 +103,8 @@ class Map():
 
     def print_topology(self) -> None:
         for zone_name, connections in self._adj_list.items():
-            targets = [c.end_point2 if c.end_point1 == zone_name 
-                    else c.end_point1 for c in connections]
+            targets = [c.end_point2 if c.end_point1 == zone_name
+                       else c.end_point1 for c in connections]
             print(f"<{zone_name}>: {' | '.join(targets)}")
 
     @property

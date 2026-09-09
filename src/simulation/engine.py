@@ -12,7 +12,7 @@ class SimulationEngine():
         self._path_finder: PathFinder = PathFinder()
         self._reservations: Dict[Tuple[str, int], int] = {}
         self._link_res: Dict[Tuple[Connection, int], int] = {}
-        self._nb_drones: int 
+        self._nb_drones: int
         self._turn_moves: List[str]
 
     def register_drone(self, drone: Drone) -> None:
@@ -47,13 +47,14 @@ class SimulationEngine():
             start: str = self._map.get_start()
             end: str = self._map.get_end()
             current_pos = start
-            
+
             for node in d.path:
                 target_node = node[0]
                 time_step = node[1]
                 if (target_node != start and target_node != end):
-                    self._reservations[node] = self._reservations.get(node, 0) + 1
-            
+                    self._reservations[
+                            node] = self._reservations.get(node, 0) + 1
+
                 conn = self._map.get_connection(current_pos, target_node)
                 if conn:
                     edge: Tuple[Connection, int] = (conn, time_step)
@@ -79,7 +80,7 @@ class SimulationEngine():
                     # Drone arrive at new node:
                     if d.path[0][0] == d.current_location:
                         d.status = DroneStatus.WAITING
-                    elif d.current_location == None:
+                    elif d.current_location is None:
                         d.status = DroneStatus.IN_TRANSIT
                     else:
                         d.status = DroneStatus.MOVING
@@ -103,6 +104,7 @@ class SimulationEngine():
     def calculate_all_occupancies(self) -> Dict[str, int]:
         return {z: sum(z == d.current_location for d in self._drones.values())
                 for z in self._map.get_zones()}
+
 
 """
 For every turn, you should split it into three phases:

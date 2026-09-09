@@ -13,8 +13,10 @@ from typing import Dict, List
 class BottomLog:
     def __init__(self) -> None:
         self.messages: list[str] = []
+
     def add(self, message: str) -> None:
         self.messages.append(message)
+
     def __rich_console__(
             self,
             console: Console,
@@ -45,7 +47,7 @@ class BottomLog:
                     for _ in range(content_height - len(visual_lines))
                     ]
             visible_lines = empty_lines + visual_lines
-        
+
         # visible_lines = rendered_lines[-content_height:]
         content = Text("\n").join(visible_lines)
         yield Panel(
@@ -64,10 +66,11 @@ class ConsoleRenderer:
         self._layout = Layout()
         self.log_history: List[str] = []
         self._log = BottomLog()
-    
+
     def start_session(self) -> None:
         """Starts the live terminal display session."""
-        upper_size = min(self._console.height - 15, len(self.map_graph.get_zones()) + 5)
+        upper_size = min(
+                self._console.height - 15, len(self.map_graph.get_zones()) + 5)
         self._layout.split_column(
             Layout(name="upper", size=upper_size),
             Layout(name="lower")
@@ -76,9 +79,8 @@ class ConsoleRenderer:
         table = Table()
         self._layout["upper"].update(table)
         self._layout["lower"].update(self._log)
-        # self._layout["lower"].update(Panel("Simulation starting...", title="Turn Log"))
         self._live = Live(self._layout, console=self._console,
-                auto_refresh=False)
+                          auto_refresh=False)
         self._live.start()
 
     def end_session(self) -> None:
@@ -97,20 +99,17 @@ class ConsoleRenderer:
         #     raise
         # return
 
-        rendered_lines: List[str] = []
         move_log_string = f"[yellow]Turn {turn}:[/yellow] {' '.join(moves)}"
         self.log_history.append(move_log_string)
         # Last 50 lines
-        recent_logs = "\n".join(reversed(self.log_history[-50:-1]
-               + [f"[bold]{move_log_string}[/bold]"])) 
-        # Wrap in Text
-        text_obj = Text(recent_logs, overflow="crop")
-    
+        recent_logs = "\n".join(reversed(
+            self.log_history[-50:-1] + [f"[bold]{move_log_string}[/bold]"]))
+
         aligned_logs = Align(recent_logs, align="left", vertical="top")
         # Update log panel content:
         self._layout["lower"].update(
                 Panel(aligned_logs, title="Turn Log", border_style="blue",
-                    )
+                      )
                 )
         self._live.refresh()
 
@@ -129,12 +128,13 @@ class ConsoleRenderer:
         h = self._console.height
         w = self._console.width
         # Define columns width:
-        max_zone_len = max((len(z) for z in self.map_graph.get_zones()), default=10)
+        max_zone_len = max(
+                (len(z) for z in self.map_graph.get_zones()), default=10)
         znl = max_zone_len + 1  # Zone lenght
         tpl = 4 if w < 100 else 10  # Type lenght
         mxl = 3  # Max capacity length
         # Drones length:
-        nb_d = len(drones) 
+        nb_d = len(drones)
         d_limit = 3 if w < 100 else 5  # max number of drones shown
         max_drone_len = max((len(d) for d in drones), default=3) + 2
         drl = min(max_drone_len * d_limit, max(10, nb_d * max_drone_len)) - 1
@@ -151,16 +151,19 @@ class ConsoleRenderer:
         """
         active_zones = [z for z in all_zones if (any(
             d.current_location == z.name for d in drones.values())
-            or any((d.path[0][0] == z.name and d.status == "in_transit" 
+            or any((d.path[0][0] == z.name and d.status == "in_transit"
                 and d.current_location == None) for d in drones.values()))]
         """
         active_zones = [z for z in all_zones if (any(
-            ((d.path and d.path[0][0] == z.name) or d.current_location == z.name)
-            for d in drones.values()))] 
+            ((d.path and d.path[0][0] == z.name)
+                or d.current_location == z.name)
+            for d in drones.values()))]
         # Combine them up to our budget limit
         if len(all_zones) > max_table_rows:
-            last_index = max(max_table_rows - 1, all_zones.index(active_zones[-1]))
-            displayed_zones = all_zones[last_index + 1 - max_table_rows:last_index + 1]
+            last_index = max(
+                    max_table_rows - 1, all_zones.index(active_zones[-1]))
+            displayed_zones = all_zones[
+                    last_index + 1 - max_table_rows:last_index + 1]
         else:
             displayed_zones = all_zones
 
@@ -173,20 +176,23 @@ class ConsoleRenderer:
             expand=True
         )
         table.add_column(
-                "Zone", no_wrap=True, style="bold white", justify="left", min_width=znl)
+            "Zone", no_wrap=True, style="bold white",
+            justify="left", min_width=znl)
         table.add_column("Type", no_wrap=True, justify="center", min_width=tpl)
-        table.add_column("Neighbors", no_wrap=True, style="dim", justify="left", ratio=1)
+        table.add_column(
+            "Neighbors", no_wrap=True, style="dim", justify="left", ratio=1)
         table.add_column("Max", no_wrap=True, justify="center", min_width=mxl)
         table.add_column("Drones", justify="left", width=drl, no_wrap=True)
-        
+
         # logic to loop through map._adj_list and add rows...
         # for node in self.map_graph.get_zones().values():
         for node in displayed_zones:
             # for node in displayed_zones:
             neighbor_strings = []
-            neighbors = {(c.end_point2 if c.end_point1 == node.name else c.end_point1):
-                    c.max_link_capacity
-                    for c in self.map_graph._adj_list[node.name]}
+            neighbors = {
+                (c.end_point2 if c.end_point1 == node.name else c.end_point1):
+                c.max_link_capacity
+                for c in self.map_graph._adj_list[node.name]}
 
             # Link capacity
             for name, cap in neighbors.items():
@@ -203,26 +209,32 @@ class ConsoleRenderer:
             type_string = z_type[:1].upper() if tpl == 4 else z_type
             if z_type == "restricted":
                 type_line = f"[bold red]{type_string}[/bold red]"
-            elif z_type == f"priority":
+            elif z_type == "priority":
                 type_line = f"[bold green]{type_string}[/bold green]"
-            elif z_type == f"blocked":
+            elif z_type == "blocked":
                 type_line = f"[bold dim red]{type_string}[/bold dim red]"
             else:
                 type_line = f"[blue]{type_string}[/blue]"
 
             # Find drones in this zone
-            zone_drones = [d.id for d in drones.values() if d.current_location == node.name]
+            zone_drones = [d.id for d in drones.values()
+                           if d.current_location == node.name]
             # Find Drones in transit
-            transit_drones = [d.id for d in drones.values() if (d.status == "in_transit" 
-                and d.path and d.path[0][0] == node.name) and d.current_location == None]
+            transit_drones = [
+                    d.id for d in drones.values() if
+                    (d.status == "in_transit" and d.path
+                        and d.path[0][0] == node.name)
+                    and d.current_location is None]
             drones_count = len(zone_drones) + len(transit_drones)
-            drones_list = ([f"[bold yellow]{d}[/bold yellow]" for d in zone_drones] +
-                    [f"[bold grey53]{d}[/bold grey53]" for d in transit_drones])
+            drones_list = (
+                [f"[bold yellow]{d}[/bold yellow]" for d in zone_drones] +
+                [f"[bold grey53]{d}[/bold grey53]" for d in transit_drones])
             if drones_count <= d_limit:
                 drones_str = ", ".join(drones_list)
             else:
                 drones_str = ", ".join(drones_list[:d_limit - 1])
-                drones_str += f"[yellow] (+{drones_count - (d_limit - 1)})[/yellow]"
+                excess_drones = drones_count - (d_limit - 1)
+                drones_str += f"[yellow] (+{excess_drones})[/yellow]"
 
             table.add_row(
                 node.name,
@@ -233,11 +245,3 @@ class ConsoleRenderer:
             )
 
         return table
-"""            table.add_row(
-                    node.name,
-                    node.metadata.zone_type,
-                    ",".join(neighbors),
-                    str(node.metadata.max_drones),
-                    ",".join([d.id for d in filter(
-                        lambda d: d.current_location == node.name,drones.values())])
-                    )"""

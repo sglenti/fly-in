@@ -11,7 +11,7 @@ from typing import Dict, List
 
 
 class BottomLog:
-    def __init__(self):
+    def __init__(self) -> None:
         self.messages: list[str] = []
     def add(self, message: str) -> None:
         self.messages.append(message)
@@ -60,9 +60,9 @@ class ConsoleRenderer:
     def __init__(self, map_graph: Map) -> None:
         self._console = Console()
         self.map_graph = map_graph
-        self._live: Live = None
+        self._live: Live
         self._layout = Layout()
-        self.log_history = []
+        self.log_history: List[str] = []
         self._log = BottomLog()
     
     def start_session(self) -> None:
@@ -97,7 +97,7 @@ class ConsoleRenderer:
         #     raise
         # return
 
-        rendered_lines = []
+        rendered_lines: List[str] = []
         move_log_string = f"[yellow]Turn {turn}:[/yellow] {' '.join(moves)}"
         self.log_history.append(move_log_string)
         # Last 50 lines

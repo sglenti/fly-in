@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set, Tuple
 from models import Zone, Connection
 import json
 
@@ -21,22 +21,27 @@ class Map():
         return self._adj_list
 
     def get_end(self) -> str:
-        return self._end_zone.name
+        if self._end_zone is None:
+            raise RuntimeError("Map has no end zone")
+        end_zone: str = self._end_zone.name
+        return end_zone
 
     def get_start(self) -> str:
-        return self._start_zone.name
+        if self._start_zone is None:
+            raise RuntimeError("Map has no end zone")
+        start_zone: str = self._start_zone.name
+        return start_zone
 
     def set_start_zone(self, zone: Zone) -> None:
         if self._start_zone is not None:
             raise ValueError(f"Map already has a start zone: {self._start_zone.name}")
         self._start_zone = zone
 
-    def get_connection(self, node1: str, node2: str) -> Optional[Connection]:
-        if node1 == node2:
-            return None
-        for conn in self._adj_list.get(node1, []):
-            if conn.end_point1 == node2 or conn.end_point2 == node2:
-                return conn
+    def get_connection(self, node1: str | None, node2: str | None) -> Optional[Connection]:
+        if node1 and node2 and node1 != node2:
+            for conn in self._adj_list.get(node1, []):
+                if conn.end_point1 == node2 or conn.end_point2 == node2:
+                    return conn
         return None
 
     def set_end_zone(self, zone: Zone) -> None:
@@ -58,7 +63,7 @@ class Map():
         if self._start_zone == self._end_zone:
             raise ValueError("Start and End hubs must differ!") 
         # fill adj_list (if duplicates, raise error)
-        processed_pairs = set()
+        processed_pairs: Set[Tuple[str,str]] = set()
 
         for conn in self._connections:
             if (conn.end_point1 not in self._zones
@@ -88,7 +93,7 @@ class Map():
         }
         return json.dumps(data, indent=4)
 
-    def print_topology(self):
+    def print_topology(self) -> None:
         for zone_name, connections in self._adj_list.items():
             targets = [c.end_point2 if c.end_point1 == zone_name 
                     else c.end_point1 for c in connections]
@@ -96,4 +101,4 @@ class Map():
 
     @property
     def start_zone_name(self) -> str:
-        return self._start_zone.name
+        return self.get_start()

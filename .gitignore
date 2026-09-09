@@ -21,3 +21,5 @@ htmlcov/
 *.local
 maps
 src/git.egg-info/
+src/fly_in.egg-info
+src/src.egg-info

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 from pydantic import BaseModel, Field
 from enum import Enum
 
@@ -12,6 +12,6 @@ class DroneStatus(str, Enum):
 
 class Drone(BaseModel):
     id: str
-    current_location: str
+    current_location: str | None
     status: DroneStatus = DroneStatus.WAITING
-    path: List[str] = Field(default_factory=list)
+    path: List[Tuple[str, int]] = Field(default_factory=list)

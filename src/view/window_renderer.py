@@ -40,7 +40,7 @@ class WindowRenderer:
         self.curr_drones_pos: Dict[str, str] = {} # drone_id -> zone_name
         self.prev_drones_pos: Dict[str, str] = {} # drone_id -> zone_name
 
-    def _set_size(self) -> int:
+    def _set_size(self) -> Tuple[float, float]:
         return ((self.x_max - self.x_min + 2) * self.scale,
                 (self.y_max - self.y_min + 2) * self.scale)
 
@@ -48,13 +48,13 @@ class WindowRenderer:
         """Convert logical grid coordinates to pixel coordinates."""
         return (x * self.scale + self.x_offset, y * self.scale + self.y_offset)
 
-    def _lerp(self, p1: tuple[float, float], p2: tuple[float, float], t: float
-            )-> tuple[float, float]:
+    def _lerp(self, p1: tuple[int, int], p2: tuple[int, int], t: float
+            )-> tuple[int, int]:
         x1, y1 = p1
         x2, y2 = p2
-        return (x1 + (x2 - x1) * t, y1 + (y2 - y1) * t)
+        return (round(x1 + (x2 - x1) * t), round(y1 + (y2 - y1) * t))
 
-    def _draw_abstract_drone(self, center: Tuple[float, float], drone_id: str, size=16):
+    def _draw_abstract_drone(self, center: Tuple[int, int], drone_id: str, size:int = 16) -> None:
         cx, cy = center
         color = get_rgb("black")
         surface = self.screen
@@ -95,11 +95,11 @@ class WindowRenderer:
 
     def _get_dock_position(
             self,
-            center: tuple[float, float],
+            center: tuple[int, int],
             index: int,
             total_drones: int,
             radius: float = 20.0
-            ) -> tuple[float, float]:
+            ) -> tuple[int, int]:
         if total_drones <= 1:
             return center
             
@@ -110,7 +110,7 @@ class WindowRenderer:
         # Offset from center
         x = cx + radius * math.cos(angle)
         y = cy + radius * math.sin(angle)
-        return (x, y)
+        return (round(x), round(y))
 
     def draw_static_map(self) -> None:
         self.screen.fill(get_rgb("gray15"))  # Dark gray background
@@ -164,8 +164,8 @@ class WindowRenderer:
         parallel_moves: Dict[Connection, int] = {}
 
         for d_id, drone in drones.items():
-            if drone.status == DroneStatus.WAITING or drone.status == DroneStatus.DELIVERED:
-                loc = drone.current_location
+            loc = drone.current_location
+            if loc and (drone.status == DroneStatus.WAITING or drone.status == DroneStatus.DELIVERED):
                 if loc not in docked_groups:
                     docked_groups[loc] = []
                 docked_groups[loc].append(d_id)
@@ -177,7 +177,7 @@ class WindowRenderer:
         # 2. Update positions: Old becomes current, Current becomes new targets
         self.prev_drones_pos = self.curr_drones_pos.copy()
         self.curr_drones_pos = {d_id: d.current_location for d_id,
-                d in drones.items()}
+                d in drones.items() if d.current_location}
 
         # 3. Animation sub-loop (e.g., 30 frames for the turn transition)
         frames = 30
@@ -191,7 +191,6 @@ class WindowRenderer:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
-                    sys.exit()
                     
             # Clear screen and draw static map (zones and connections)
             self.draw_static_map()
@@ -201,6 +200,9 @@ class WindowRenderer:
                 start_zone_name = self.prev_drones_pos.get(
                         d_id, drone.current_location)
                 target_zone_name = drone.current_location
+                
+                if not start_zone_name or not target_zone_name:
+                    continue
                 
                 # If there are multiple drones moving along this link, stagger them:
                 conn = self.map_graph.get_connection(start_zone_name, target_zone_name)
@@ -233,6 +235,8 @@ class WindowRenderer:
                     start_zone_name = self.prev_drones_pos.get(d_id)
                     target_zone_name = drone.current_location
                 
+                if not start_zone_name or not target_zone_name:
+                    continue
                 # If there are multiple drones moving along this link, stagger them:
                 conn = self.map_graph.get_connection(start_zone_name, target_zone_name)
                 if conn in parallel_moves:
@@ -262,10 +266,10 @@ class WindowRenderer:
             for name, dock in docked_groups.items():
                 zone = self.map_graph.get_zones().get(name)
                 if zone:
-                    for d_idx, drone in enumerate(dock, 1):
+                    for d_idx, dro in enumerate(dock, 1):
                         docked_pos = self._get_dock_position(
                                 self._to_pixels(zone.x, zone.y), d_idx, len(dock))
-                        self._draw_abstract_drone(docked_pos, drone)
+                        self._draw_abstract_drone(docked_pos, dro)
             pygame.display.flip()
             clock.tick(60)  # Keep it at 60 FPS for smooth animation
 
@@ -279,23 +283,26 @@ class WindowRenderer:
                 docked_groups[drone.current_location].append(d_id)
         # Moving drones get docked by the end of turn:
         for d in moving_drones.values():
-            if d.current_location not in docked_groups:
-                docked_groups[d.current_location] = []
-            docked_groups[d.current_location].append(d.id)
+            if d.current_location:
+                if d.current_location not in docked_groups:
+                    docked_groups[d.current_location] = []
+                docked_groups[d.current_location].append(d.id)
         # Docked drones displaying:
         for name, dock in docked_groups.items():
             zone = self.map_graph.get_zones().get(name)
             if zone:
-                for d_idx, drone in enumerate(dock, 1):
-                    if drone in in_transit:
-                        in_transit.pop(drone)                        
+                for d_idx, dro in enumerate(dock, 1):
+                    if dro in in_transit:
+                        in_transit.pop(dro)                        
                     docked_pos = self._get_dock_position(
                             self._to_pixels(zone.x, zone.y), d_idx, len(dock))
-                    self._draw_abstract_drone(docked_pos, drone)
+                    self._draw_abstract_drone(docked_pos, dro)
         # Drones still in transit have to stay in the middle of the link:
         for d_id, drone in in_transit.items():
             start_zone_name = self.prev_drones_pos.get(d_id)
             target_zone_name = drone.path[0][0]
+            if not start_zone_name or not target_zone_name:
+                continue
             z_start = self.map_graph.get_zones().get(start_zone_name)
             z_target = self.map_graph.get_zones().get(target_zone_name)
             

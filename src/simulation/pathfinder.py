@@ -1,21 +1,28 @@
-from src.models import Drone, Map, Connection
+from src.models import Drone, Map, Connection, Zone
 import heapq
 import sys
-from typing import Dict
+from typing import Dict, List, Tuple, Set
 from rich import print
 
 
 class PathFinder():
-    def update(self, path):
+    def update(self) -> None:
         pass
 
-    def dijkstra(self, zones, adj_list, drone) -> Dict[str, str]:
-        # Simple Dijkstra structure
+    def dijkstra(
+            self,
+            zones: Dict[str, Zone],
+            adj_list: Dict[str, List[Connection]],
+            drone: Drone
+            ) -> Dict[str, str] | None:
+        if not drone.current_location:
+            return None
 
+        # Simple Dijkstra structure
         src = drone.current_location
 
         # Min-heap (priority queue) storing pairs of (distance, node)
-        priority_queue = []
+        priority_queue: List[Tuple[int, str]] = []
 
         distances = {k: sys.maxsize for k in adj_list}
         parent = {}
@@ -51,15 +58,18 @@ class PathFinder():
             self,
             map_graph: Map,
             drone: Drone,
-            reservations,
-            link_res,
-            goal,
-            time=0
-            ) -> Dict[str, str]:
+            reservations: Dict[Tuple[str, int], int],
+            link_res: Dict[Tuple[Connection, int], int],
+            goal: str,
+            time: int = 0
+            ) -> List[Tuple[str, int]]:
 
-        def reconstruct_path(parents: dict, start: str, goal: str) -> list[str]:
+        def reconstruct_path(
+                parents: Dict[Tuple[str, int], Tuple[str, int]],
+                start: Tuple[str, int],
+                goal: Tuple[str, int]) -> List[Tuple[str, int]]:
             current = goal
-            path = []
+            path: List[Tuple[str, int]] = []
             # If the goal was never reached, return an empty path
             if current not in parent and current != start:
                 return []
@@ -71,17 +81,19 @@ class PathFinder():
             path.reverse() # Since we walked backwards from goal to start
             return path
 
-        zones = map_graph.get_zones()
-        connections = map_graph.get_conn_list()
-        adj_list = map_graph.get_adj_list()
-        src = drone.current_location
+        if not drone.current_location:
+            return []
+        zones: Dict[str, Zone] = map_graph.get_zones()
+        connections: List[Connection] = map_graph.get_conn_list()
+        adj_list: Dict[str, List[Connection]] = map_graph.get_adj_list()
+        src: str = drone.current_location
 
         # Min-heap (priority queue) storing pairs of (time-space, distance)
-        priority_queue = []
+        priority_queue: List[Tuple[int, int, str, int]] = []
 
-        distances = {(src, 0): 0}
-        parent = {}
-        visited = set()
+        distances: Dict[Tuple[str, int], int] = {(src, 0): 0}
+        parent: Dict[Tuple[str, int], Tuple[str, int]] = {}
+        visited: Set[Tuple[str, int]] = set()
 
         # Distance-time from source to itself is 0
         heapq.heappush(priority_queue, (0, 0, src, time))

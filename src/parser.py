@@ -1,5 +1,6 @@
 from models import Map, Zone, Connection, ZoneMetadata, ZoneType, Drone
 from simulation import SimulationEngine
+from typing import Dict, Any, List
 
 
 class Parser():
@@ -18,7 +19,7 @@ class Parser():
                 items = values[3].strip("[]").split()
                 params: Dict[str, str] = {}
                 for item in items:
-                    key_value = item.split("=")
+                    key_value: List[Any] = item.split("=")
                     if len(key_value) != 2:
                         raise SyntaxError(
                             f"Wrong map file syntax, huh {values[0]}: {item}")
@@ -31,13 +32,13 @@ class Parser():
             return Zone(name=values[0], x=values[1], y=values[2], metadata=metadata)
 
         def create_connection(data: str) -> Connection:
-            values = data.split()
+            values: List[str] = data.split()
             if len(values) > 2:
                 raise SyntaxError(f"Wrong syntax for map file, conn {values[0]}")
-            hubs = values[0].split("-")
+            hubs: List[str] = values[0].split("-")
             if len(hubs) != 2:
                 raise ValueError(f"Wrong connection format: {values[0]}")
-            params = {"end_point1": hubs[0], "end_point2": hubs[1]}
+            params: Dict[str, str|int] = {"end_point1": hubs[0], "end_point2": hubs[1]}
             if len(values) == 2:
                 key, value = values[1].strip("[]").split("=")
                 params[key] = int(value)

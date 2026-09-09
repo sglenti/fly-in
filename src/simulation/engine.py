@@ -43,9 +43,9 @@ class SimulationEngine():
                         d,
                         self._reservations,
                         self._link_res,
-                        self._map._end_zone.name)
-            start = self._map.get_start()
-            end = self._map.get_end()
+                        self._map.get_end())
+            start: str = self._map.get_start()
+            end: str = self._map.get_end()
             current_pos = start
             
             for node in d.path:
@@ -56,7 +56,7 @@ class SimulationEngine():
             
                 conn = self._map.get_connection(current_pos, target_node)
                 if conn:
-                    edge = (conn, time_step)
+                    edge: Tuple[Connection, int] = (conn, time_step)
                     self._link_res[edge] = self._link_res.get(edge, 0) + 1
                 current_pos = target_node
 

@@ -15,7 +15,7 @@ class Application:
         self.map_graph = Map()
         self.engine = SimulationEngine(self.map_graph)
         self.renderer = ConsoleRenderer(self.map_graph)
-        self.interactive = False
+        self.interactive = True
 
     def run(self) -> None:
         # 1. Parse and Build:

@@ -1,6 +1,6 @@
 # Project configuration
 PYTHON = python3
-PIP = uv
+PIP = PYTHONPATH=. uv
 VENV = .venv
 SRC_DIR = src
 LINT_DIRS = $(SRC_DIR)
@@ -11,12 +11,12 @@ all: install
 # Install dependencies
 install:
 	$(PIP) venv $(VENV)
-	$(VENV)/bin/$(PIP) pip install flake8 mypy
+	$(PIP) sync
 
 # Run the project
 # usage: make run map=maps/easy1.txt
 run:
-	$(PIP) run $(SRC_DIR)/main.py $(map)
+	$(PIP) run $(SRC_DIR) $(map)
 
 # Debug mode
 debug:

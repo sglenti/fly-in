@@ -70,14 +70,79 @@ class SimulationEngine():
     def is_running(self) -> bool:
         return self._running
 
+    def _validate_moves(self) -> None:
+        intents_zone: Dict[Tuple[str, int], List[str]] = {}
+        intents_conn: Dict[Tuple[str, str, int], List[str]] = {}
+
+        for d in self._drones.values():
+            if not d.path:
+                # Drone arrived
+                continue
+            if d.current_location:
+                # Docked drone
+                node = d.path[0]
+                if node not in intents_zone:
+                    intents_zone[node] = []
+                intents_zone[node].append(d.id)
+                # if it is moving, check link
+                if node[0] != d.current_location:
+                    edge = (d.current_location, node[0], node[1])
+                    if edge not in intents_conn:
+                        intents_conn[edge] = []
+                    intents_conn[edge].append(d.id)
+                # Also check next location if it happens next turn
+                if len(d.path) > 1 and d.path[1][1] == self._turn + 1:
+                    node = d.path[1]
+                    if node not in intents_zone:
+                        intents_zone[node] = []
+                    intents_zone[node].append(d.id)
+            else:
+                # Drone in transit:
+                node = d.path[0]
+                if node not in intents_zone:
+                    intents_zone[node] = []
+                intents_zone[node].append(d.id)
+                if len(d.path) > 1 and d.path[1][1] == self._turn + 1:
+                    node = d.path[1]
+                    if node not in intents_zone:
+                        intents_zone[node] = []
+                    intents_zone[node].append(d.id)
+
+        zones = self._map.get_zones()
+        for i, drones in intents_zone.items():
+            zone = i[0]
+            if zone == self._map.get_start() or zone == self._map.get_end():
+                continue
+            if len(drones) > zones[zone].metadata.max_drones:
+                raise RuntimeError(
+                    f"Hub '{zone}' Max Capacity Violation (turn {self._turn})")
+            elif zones[zone].metadata.zone_type == "blocked":
+                raise RuntimeError(
+                   f"Trying to enter Blocked Zone '{zone}' (turn {self._turn})")
+        for i, drones in intents_conn.items():
+            conn = self._map.get_connection(i[0], i[1])
+            if not conn:
+                raise RuntimeError(
+                    f"Invalid movement (turn {self._turn}): "
+                    f"no connection ({i[0]}-{i[1]})")
+            elif len(drones) > conn.max_link_capacity - 1:
+                raise RuntimeError(
+                        f"Link Capacity Violation (turn {self._turn}): "
+                        f"'{i[0]}-{i[1]}'")
+
     def process_turn(self) -> None:
         self._turn += 1
         self._turn_moves = []
+        
+        # sanity check, will raise an exception for invalid moves
+        self._validate_moves()
+
+        # Paths validated, drones can move:
         for d in self._drones.values():
             # print(f"{d.id} Path:", d.path)
             if len(d.path) and d.status != DroneStatus.DELIVERED:
                 if d.path[0][1] == self._turn:
-                    # Drone arrive at new node:
+                    # Drone arriving (or waiting) this turn:
                     if d.path[0][0] == d.current_location:
                         d.status = DroneStatus.WAITING
                     elif d.current_location is None:
@@ -97,29 +162,12 @@ class SimulationEngine():
                     self._turn_moves.append(f"{d.id}-{end1}-{end2}")
                 else:
                     # Houston, we have a problem:
-                    raise ValueError("Drone with path node in the past!")
+                    raise ValueError(
+                        f"Drone '{d.id}' with path node in the past!"
+                        f"{d.path}")
             else:
                 d.status = DroneStatus.DELIVERED
 
     def calculate_all_occupancies(self) -> Dict[str, int]:
         return {z: sum(z == d.current_location for d in self._drones.values())
                 for z in self._map.get_zones()}
-
-
-"""
-For every turn, you should split it into three phases:
-
-    Intent Phase (The "Think"):
-        Iterate over every drone.
-        Ask the Pathfinder: "Given the current map and the positions of all other drones, what is your next best move?"
-        Store these "Intents" in a temporary structure (e.g., a dictionary drone_id -> target_zone).
-        Crucial: Do not update the drone's actual position yet!
-
-    Conflict Resolution Phase (The "Traffic Control"):
-        Check the requested "Intents" against the max_drones and max_link_capacity rules.
-        If two drones want to move into the same zone, resolve the conflict (e.g., let the higher-priority drone move and force the other to wait).
-
-    Commit Phase (The "Act"):
-        Update the drone positions for all confirmed moves.
-        Log the turn using the mandatory output format.
-"""

@@ -7,6 +7,7 @@ import sys
 import pygame
 import time
 from rich import print as rprint
+from rich.console import Console
 
 
 class Application:
@@ -15,6 +16,7 @@ class Application:
         self.map_graph = Map()
         self.engine = SimulationEngine(self.map_graph)
         self.renderer = ConsoleRenderer(self.map_graph)
+        self.error_console = Console(stderr=True)
         self.interactive = True
 
     def run(self) -> None:
@@ -55,7 +57,14 @@ class Application:
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_n:
                             paused = False
-            self.engine.process_turn()
+            try:
+                self.engine.process_turn()
+            except Exception as e:
+                console_view.end_session()
+                pygame.quit()
+                self.engine.stop()
+                self.error_console.print(f"[bold red]Error:[/bold red] {e}")
+                sys.exit()
             occupancy_map = self.engine.calculate_all_occupancies()
             window_view.draw_animated_turn(
                     self.engine.get_drones(), clock)

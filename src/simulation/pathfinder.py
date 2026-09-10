@@ -90,11 +90,11 @@ class PathFinder():
         src: str = drone.current_location
 
         # Min-heap (priority queue) storing pairs of (time-space, distance)
-        priority_queue: List[Tuple[int, int, str, int]] = []
+        priority_queue: List[Tuple[int, float, str, int]] = []
 
         distances: Dict[Tuple[str, int], int] = {(src, 0): 0}
         parent: Dict[Tuple[str, int], Tuple[str, int]] = {}
-        visited: Set[Tuple[str, int]] = set()
+        #visited: Set[Tuple[str, int]] = set()
 
         # Distance-time from source to itself is 0
         heapq.heappush(priority_queue, (0, 0, src, time))
@@ -115,18 +115,18 @@ class PathFinder():
 
             # Is there capacity to wait here?:
             wait_state = (current_node, current_time + 1)
-            if wait_state not in reservations and wait_state not in visited:
+            if wait_state not in reservations:
                 distances[wait_state] = cost + 1
                 heapq.heappush(
                             priority_queue,
                             (
                                 cost + 1,
-                                priority,
+                                priority - 0.01,
                                 current_node,
                                 current_time + 1)
                             )
                 parent[(current_node, current_time + 1)] = current_state
-                visited.add(wait_state)
+                #visited.add(wait_state)
 
             # Explore all neighbors of the current vertex
             for conn in adj_list[current_node]:
@@ -139,8 +139,8 @@ class PathFinder():
                           metadata.zone_type == "restricted" else 1)
                 next_state = (neighbor, current_time + weight)
 
-                if next_state in visited:
-                    continue
+                #if next_state in visited:
+                    #pass #  continue
 
                 # When evaluate a next state (neighbor, arrival_time):
                 current_occupants = reservations.get(next_state, 0)

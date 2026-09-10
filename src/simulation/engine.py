@@ -125,7 +125,7 @@ class SimulationEngine():
                 raise RuntimeError(
                     f"Invalid movement (turn {self._turn}): "
                     f"no connection ({i[0]}-{i[1]})")
-            elif len(drones) > conn.max_link_capacity - 1:
+            elif len(drones) > conn.max_link_capacity:
                 raise RuntimeError(
                         f"Link Capacity Violation (turn {self._turn}): "
                         f"'{i[0]}-{i[1]}'")

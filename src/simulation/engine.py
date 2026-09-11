@@ -49,16 +49,19 @@ class SimulationEngine():
             current_pos = start
 
             for node in d.path:
+                # zone-time reservations:
                 target_node = node[0]
                 time_step = node[1]
                 if (target_node != start and target_node != end):
                     self._reservations[
                             node] = self._reservations.get(node, 0) + 1
 
+                # link-time reservations:
                 conn = self._map.get_connection(current_pos, target_node)
                 if conn:
                     edge: Tuple[Connection, int] = (conn, time_step)
                     self._link_res[edge] = self._link_res.get(edge, 0) + 1
+                    # if moving into a restricted zone, reserve 2 turns
                     if self._map.is_restricted(target_node):
                         edge = (conn, time_step - 1)
                         self._link_res[edge] = self._link_res.get(edge, 0) + 1

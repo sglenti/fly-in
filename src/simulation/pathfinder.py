@@ -145,14 +145,19 @@ class PathFinder():
                           metadata.zone_type == "restricted" else 1)
                 next_state = (neighbor, current_time + weight)
 
-                # When evaluate a next state (neighbor, arrival_time):
+                # Evaluate if next state if available:
                 current_occupants = reservations.get(next_state, 0)
-                link_users = link_res.get((conn, current_time + weight), 0)
+                link_users = link_res.get((conn, current_time + 1), 0)
                 zone_capacity = zones[neighbor].metadata.max_drones
                 link_capacity = conn.max_link_capacity
                 if (current_occupants >= zone_capacity or
                         link_users >= link_capacity):
                     # Too crowded! This state is alreary fully booked
+                    continue
+                # if moving into restricted, it will need link for 2 turns:
+                if weight == 2:
+                    link_users = link_res.get((conn, current_time + 2), 0)
+                if link_users >= link_capacity:
                     continue
 
                 # If not visited, treat as is:

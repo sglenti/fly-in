@@ -1,7 +1,7 @@
 [project]
-name = "git"
-version = "0.1.0"
-description = "Add your description here"
+name = "fly-in"
+version = "1.0.0"
+description = "A multi-agent drone routing simulation system"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -11,3 +11,13 @@ dependencies = [
     "pygame>=2.6.1",
     "rich>=15.0.0",
 ]
+
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.mypy]
+warn_return_any = true
+warn_unused_ignores = true
+ignore_missing_imports = true
+disallow_untyped_defs = true
+check_untyped_defs = true

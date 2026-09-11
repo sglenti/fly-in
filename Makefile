@@ -23,12 +23,12 @@ debug:
 
 # Linting
 lint:
-	$(VENV)/bin/mypy $(LINT_DIRS) --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
-	$(VENV)/bin/flake8 $(LINT_DIRS)
+	$(UV) run mypy $(LINT_DIRS) --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+	$(UV) run flake8 $(LINT_DIRS)
 
 lint-strict:
-	$(VENV)/bin/mypy $(LINT_DIRS) --strict
-	$(VENV)/bin/flake8 $(LINT_DIRS)
+	$(UV) run mypy $(LINT_DIRS) --strict
+	$(UV) run flake8 $(LINT_DIRS)
 
 # Cleanup
 clean:

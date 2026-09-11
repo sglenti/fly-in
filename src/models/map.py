@@ -1,5 +1,5 @@
 from typing import Dict, List, Optional, Set, Tuple
-from models import Zone, Connection
+from models import Zone, Connection, ZoneType
 import json
 
 
@@ -37,6 +37,9 @@ class Map():
             raise ValueError(
                     f"Map already has a start zone: {self._start_zone.name}")
         self._start_zone = zone
+
+    def is_restricted(self, zone: str) -> bool:
+        return self._zones[zone].metadata.zone_type == ZoneType.RESTRICTED
 
     def get_connection(
             self,

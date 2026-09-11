@@ -65,6 +65,12 @@ class PathFinder():
             time: int = 0
             ) -> List[Tuple[str, int]]:
 
+        def heuristic(node_name: str) -> float:
+            z = map_graph.get_zones()[node_name]
+            goal = map_graph.get_zones()[map_graph.get_end()]
+            # Euclidean distance to goal
+            return (((z.x - goal.x) ** 2 + (z.y - goal.y) ** 2) ** 0.5) * 1
+
         def reconstruct_path(
                 parents: Dict[Tuple[str, int], Tuple[str, int]],
                 start: Tuple[str, int],
@@ -90,22 +96,21 @@ class PathFinder():
         src: str = drone.current_location
 
         # Min-heap (priority queue) storing pairs of (time-space, distance)
-        priority_queue: List[Tuple[int, float, str, int]] = []
+        priority_queue: List[Tuple[float, int, float, str, int]] = []
 
         distances: Dict[Tuple[str, int], int] = {(src, 0): 0}
         parent: Dict[Tuple[str, int], Tuple[str, int]] = {}
-        #visited: Set[Tuple[str, int]] = set()
 
         # Distance-time from source to itself is 0
-        heapq.heappush(priority_queue, (0, 0, src, time))
+        heapq.heappush(priority_queue, (heuristic(src), 0, 0, src, time))
 
         # Process the queue until all reachable vertices are finalized
         while priority_queue:
-            cost, priority, current_node, current_time = heapq.heappop(
+            ec, cost, priority, current_node, current_time = heapq.heappop(
                     priority_queue)
             current_state = (current_node, current_time)
 
-            # If this distance not the latest shortest one, skip it
+            # If this distance is bigger than latest shortest one, skip it
             if cost > distances[(current_node, current_time)]:
                 continue
 
@@ -117,16 +122,17 @@ class PathFinder():
             wait_state = (current_node, current_time + 1)
             if wait_state not in reservations:
                 distances[wait_state] = cost + 1
+                est_cost = distances[wait_state] + heuristic(current_node) - 0.1
                 heapq.heappush(
                             priority_queue,
                             (
-                                cost + 1,
+                                est_cost,
+                                distances[wait_state],
                                 priority - 0.01,
                                 current_node,
                                 current_time + 1)
                             )
                 parent[(current_node, current_time + 1)] = current_state
-                #visited.add(wait_state)
 
             # Explore all neighbors of the current vertex
             for conn in adj_list[current_node]:
@@ -139,9 +145,6 @@ class PathFinder():
                           metadata.zone_type == "restricted" else 1)
                 next_state = (neighbor, current_time + weight)
 
-                #if next_state in visited:
-                    #pass #  continue
-
                 # When evaluate a next state (neighbor, arrival_time):
                 current_occupants = reservations.get(next_state, 0)
                 link_users = link_res.get((conn, current_time + weight), 0)
@@ -149,7 +152,7 @@ class PathFinder():
                 link_capacity = conn.max_link_capacity
                 if (current_occupants >= zone_capacity or
                         link_users >= link_capacity):
-                    # Too crowded! This state is truly blocked.
+                    # Too crowded! This state is alreary fully booked
                     continue
 
                 # If not visited, treat as is:
@@ -160,12 +163,15 @@ class PathFinder():
                 if distances[current_state] + weight < distances[next_state]:
                     distances[next_state] = distances[current_state] + weight
                     parent[next_state] = current_state
-                    visited.add(next_state)
                     new_priority = (priority - 1 if zones[neighbor].metadata.
                                     zone_type == "priority" else priority)
+                    est_cost = distances[next_state] + heuristic(neighbor)
+                    if neighbor == parent.get(current_state, (None, 0))[0]:
+                        est_cost += 1
                     heapq.heappush(
                             priority_queue,
                             (
+                                est_cost,
                                 distances[next_state],
                                 new_priority,
                                 neighbor,

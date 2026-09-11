@@ -1,6 +1,6 @@
 # Project configuration
 PYTHON = python3
-PIP = PYTHONPATH=. uv
+UV = uv
 VENV = .venv
 SRC_DIR = src
 LINT_DIRS = $(SRC_DIR)
@@ -10,17 +10,16 @@ all: install
 
 # Install dependencies
 install:
-	$(PIP) venv $(VENV)
-	$(PIP) sync
+	$(UV) sync
 
 # Run the project
 # usage: make run map=maps/easy1.txt
 run:
-	$(PIP) run $(SRC_DIR) $(map)
+	$(UV) run $(PYTHON) -m $(SRC_DIR) $(map)
 
 # Debug mode
 debug:
-	$(VENV)/bin/$(PYTHON) -m pdb $(SRC_DIR)/main.py $(map)
+	$(UV) run $(PYTHON) -m pdb -m $(SRC_DIR) $(map)
 
 # Linting
 lint:
@@ -33,7 +32,6 @@ lint-strict:
 
 # Cleanup
 clean:
-	rm -rf $(VENV)
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	find . -type d -name ".mypy_cache" -exec rm -rf {} +
 	rm -rf .pytest_cache

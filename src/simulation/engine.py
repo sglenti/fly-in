@@ -59,6 +59,9 @@ class SimulationEngine():
                 if conn:
                     edge: Tuple[Connection, int] = (conn, time_step)
                     self._link_res[edge] = self._link_res.get(edge, 0) + 1
+                    if self._map.is_restricted(target_node):
+                        edge = (conn, time_step - 1)
+                        self._link_res[edge] = self._link_res.get(edge, 0) + 1
                 current_pos = target_node
 
     def start(self) -> None:
@@ -72,7 +75,7 @@ class SimulationEngine():
 
     def _validate_moves(self) -> None:
         intents_zone: Dict[Tuple[str, int], List[str]] = {}
-        intents_conn: Dict[Tuple[str, str, int], List[str]] = {}
+        intents_conn: Dict[Tuple[Connection, int], List[str]] = {}
 
         for d in self._drones.values():
             if not d.path:
@@ -86,10 +89,22 @@ class SimulationEngine():
                 intents_zone[node].append(d.id)
                 # if it is moving, check link
                 if node[0] != d.current_location:
-                    edge = (d.current_location, node[0], node[1])
+                    conn = self._map.get_connection(
+                            d.current_location, node[0])
+                    if not conn:
+                        raise RuntimeError(
+                            f"Invalid movement (turn {self._turn}): "
+                            f"no connection ({d.current_location}-{node[0]})")
+                    edge: Tuple[Connection, int] = (conn, node[1])
                     if edge not in intents_conn:
                         intents_conn[edge] = []
                     intents_conn[edge].append(d.id)
+                    # if we have a 2 turn movement, need to reserve for both
+                    if node[1] == self._turn + 1:
+                        edge = (conn, node[1] - 1)
+                        if edge not in intents_conn:
+                            intents_conn[edge] = []
+                        intents_conn[edge].append(d.id)
                 # Also check next location if it happens next turn
                 if len(d.path) > 1 and d.path[1][1] == self._turn + 1:
                     node = d.path[1]
@@ -120,15 +135,11 @@ class SimulationEngine():
                 raise RuntimeError(
                    f"Trying to enter Blocked Zone '{zone}' (turn {self._turn})")
         for i, drones in intents_conn.items():
-            conn = self._map.get_connection(i[0], i[1])
-            if not conn:
-                raise RuntimeError(
-                    f"Invalid movement (turn {self._turn}): "
-                    f"no connection ({i[0]}-{i[1]})")
-            elif len(drones) > conn.max_link_capacity:
+            conn = i[0]
+            if len(drones) > conn.max_link_capacity:
                 raise RuntimeError(
                         f"Link Capacity Violation (turn {self._turn}): "
-                        f"'{i[0]}-{i[1]}'")
+                        f"'{i[0]}:{drones}'")
 
     def process_turn(self) -> None:
         self._turn += 1

@@ -17,7 +17,7 @@ class Application:
         self.engine = SimulationEngine(self.map_graph)
         self.renderer = ConsoleRenderer(self.map_graph)
         self.error_console = Console(stderr=True)
-        self.interactive = True
+        self.interactive = False
 
     def run(self) -> None:
         # 1. Parse and Build:
@@ -57,6 +57,12 @@ class Application:
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_n:
                             paused = False
+                        if event.key == pygame.K_q:
+                            paused = False
+                            self.engine.stop()
+                            pygame.quit()
+            if not self.engine.is_running():
+                break
             try:
                 self.engine.process_turn()
             except Exception as e:

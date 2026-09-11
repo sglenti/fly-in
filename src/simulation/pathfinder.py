@@ -62,10 +62,13 @@ class PathFinder():
             reservations: Dict[Tuple[str, int], int],
             link_res: Dict[Tuple[Connection, int], int],
             goal: str,
-            time: int = 0
+            time: int = 0,
+            heur: bool = False
             ) -> List[Tuple[str, int]]:
 
         def heuristic(node_name: str) -> float:
+            if not heur:
+                return 0
             z = map_graph.get_zones()[node_name]
             goal = map_graph.get_zones()[map_graph.get_end()]
             # Euclidean distance to goal

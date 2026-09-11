@@ -1,7 +1,7 @@
 from src.models import Drone, Map, Connection, Zone
 import heapq
 import sys
-from typing import Dict, List, Tuple, Set
+from typing import Dict, List, Tuple
 
 
 class PathFinder():
@@ -68,11 +68,11 @@ class PathFinder():
 
         def heuristic(node_name: str) -> float:
             if not heur:
-                return 0
+                return float(0)
             z = map_graph.get_zones()[node_name]
             goal = map_graph.get_zones()[map_graph.get_end()]
             # Euclidean distance to goal
-            return (((z.x - goal.x) ** 2 + (z.y - goal.y) ** 2) ** 0.5) * 1
+            return float(((z.x - goal.x) ** 2 + (z.y - goal.y) ** 2) ** 0.5)
 
         def reconstruct_path(
                 parents: Dict[Tuple[str, int], Tuple[str, int]],
@@ -125,7 +125,8 @@ class PathFinder():
             wait_state = (current_node, current_time + 1)
             if wait_state not in reservations:
                 distances[wait_state] = cost + 1
-                est_cost = distances[wait_state] + heuristic(current_node) - 0.1
+                est_cost = (
+                        distances[wait_state] + heuristic(current_node) - 0.1)
                 heapq.heappush(
                             priority_queue,
                             (

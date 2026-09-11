@@ -127,8 +127,8 @@ class SimulationEngine():
                     intents_zone[node].append(d.id)
 
         zones = self._map.get_zones()
-        for i, drones in intents_zone.items():
-            zone = i[0]
+        for iz, drones in intents_zone.items():
+            zone = iz[0]
             if zone == self._map.get_start() or zone == self._map.get_end():
                 continue
             if len(drones) > zones[zone].metadata.max_drones:
@@ -136,18 +136,18 @@ class SimulationEngine():
                     f"Hub '{zone}' Max Capacity Violation (turn {self._turn})")
             elif zones[zone].metadata.zone_type == "blocked":
                 raise RuntimeError(
-                   f"Trying to enter Blocked Zone '{zone}' (turn {self._turn})")
-        for i, drones in intents_conn.items():
-            conn = i[0]
+                   f"Trying to enter Blocked Hub '{zone}' (turn {self._turn})")
+        for ic, drones in intents_conn.items():
+            conn = ic[0]
             if len(drones) > conn.max_link_capacity:
                 raise RuntimeError(
                         f"Link Capacity Violation (turn {self._turn}): "
-                        f"'{i[0]}:{drones}'")
+                        f"'{ic[0]}:{drones}'")
 
     def process_turn(self) -> None:
         self._turn += 1
         self._turn_moves = []
-        
+
         # sanity check, will raise an exception for invalid moves
         self._validate_moves()
 

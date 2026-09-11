@@ -6,7 +6,6 @@ from view import WindowRenderer
 import sys
 import pygame
 import time
-from rich import print as rprint
 from rich.console import Console
 
 
@@ -44,9 +43,6 @@ class Application:
         # 4. Execute simulation:
         window_view.draw_animated_turn(self.engine.get_drones(), clock)
         console_view.render_turn(0, self.engine.get_drones())
-
-        # console_view.print_line(self.engine.get_turn(), [str(self.engine._link_res)])
-
         time.sleep(1)
         self.engine.start()
         while self.engine.is_running():

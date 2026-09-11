@@ -39,7 +39,8 @@ class Map():
         self._start_zone = zone
 
     def is_restricted(self, zone: str) -> bool:
-        return self._zones[zone].metadata.zone_type == ZoneType.RESTRICTED
+        return bool(
+                self._zones[zone].metadata.zone_type == ZoneType.RESTRICTED)
 
     def get_connection(
             self,

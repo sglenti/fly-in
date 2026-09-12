@@ -95,7 +95,8 @@ class Map():
             pair = tuple(sorted((conn.end_point1, conn.end_point2)))
             if pair in processed_pairs:
                 raise ValueError("Duplicated connection: "
-                                 f"{conn.end_point1}-{conn.end_point2}")
+                                 f"'{conn.end_point1}-{conn.end_point2}'")
+            processed_pairs.add(pair)
 
             if conn.end_point1 not in self._adj_list:
                 self._adj_list[conn.end_point1] = []

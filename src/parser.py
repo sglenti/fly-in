@@ -15,12 +15,13 @@ class Parser():
             data, meta = data_str.split(" [", 1)
             values = data.split(" ", 3)
             if len(values) != 3:
-                raise SyntaxError(
+                if values[1].isalpha():
+                    raise ValueError(
+                        f"Name cannot contain spaces, '{values[0]} {values[1]}'")
+                else:
+                    raise SyntaxError(
                         f"Wrong syntax for map file, hub '{values[0]}'"
                         "\n Format: 'name x y \[optional metadata]'")
-            if values[1].isalpha():
-                raise ValueError(
-                    f"Name cannot contain spaces, '{values[0]} {values[1]}'")
             metadata = None
             if meta:
                 if not meta.endswith("]"):
@@ -43,16 +44,26 @@ class Parser():
                 name=values[0], x=values[1], y=values[2], metadata=metadata)
 
         def create_connection(data: str) -> Connection:
-            values: List[str] = data.split()
+            values: List[str] = data.split(" [", 1)
             if len(values) > 2:
                 raise SyntaxError(
-                        f"Wrong syntax for map file, conn {values[0]}")
+                        f"Wrong syntax for Connection"
+                        "\n Format: zone1-zone2 \[optional metadata]")
             hubs: List[str] = values[0].split("-")
             if len(hubs) != 2:
-                raise ValueError(f"Wrong connection format: {values[0]}")
+                raise ValueError(f"Wrong connection format: '{values[0]}'")
+            valid_names = self._map_graph.get_zones().keys()
+            #for hub in hubs:
+            #    if hub not in valid_names:
+            #        raise ValueError(
+            #                f"Invalid Zone name for Connection: '{hub}'")
             params: Dict[str, str | int] = {
                     "end_point1": hubs[0], "end_point2": hubs[1]}
             if len(values) == 2:
+                meta = values[1]
+                if not meta.endswith("]"):
+                    raise SyntaxError(
+                        f"Wrong syntax for connection metadata '{values[0]}'")
                 key, value = values[1].strip("[]").split("=")
                 params[key] = int(value)
             return Connection(**params)
@@ -107,17 +118,22 @@ class Parser():
                 else:
                     print(parsed_line)
                     raise SyntaxError(
-                            f"Wrong syntax for map file, hub line: '{n}'"
+                            f"Wrong hub syntax, line {n}"
                             f"\n Valid keys are {hub_keys}")
             elif parsed_line[0] == "connection":
-                conn = create_connection(parsed_line[1])
+                try:
+                    conn = create_connection(parsed_line[1])
+                except Exception as e:
+                    raise ValueError(
+                            f"Error in line {n}: {e}")
                 self._map_graph.add_connection(conn)
             elif parsed_line[0] == "nb_drones":
                 raise SyntaxError(
                             f"Wrong syntax for map file, line: '{n}'"
                             "\n nb_drones can't be defined twice")
             else:
-                raise SyntaxError(f"Wrong key for map file, line {n}")
+                raise SyntaxError(
+                    f"Error in line {n}: invalid key '{parsed_line [0]}'")
 
         for i in range(1, nb_drones + 1):
             self._engine.register_drone(

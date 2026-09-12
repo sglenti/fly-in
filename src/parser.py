@@ -1,6 +1,7 @@
 from models import Map, Zone, Connection, ZoneMetadata, Drone
 from simulation import SimulationEngine
 from typing import Dict, Any, List
+from pydantic import ValidationError
 
 
 class Parser():
@@ -10,20 +11,28 @@ class Parser():
         self._engine = engine
 
     def parse_file(self, file_name: str) -> None:
-        def create_zone(data: str) -> Zone:
+        def create_zone(data_str: str) -> Zone:
+            data, meta = data_str.split(" [", 1)
             values = data.split(" ", 3)
-            if len(values) < 3:
+            if len(values) != 3:
                 raise SyntaxError(
-                        f"Wrong syntax for map file, hub {values[0]}")
+                        f"Wrong syntax for map file, hub '{values[0]}'"
+                        "\n Format: 'name x y \[optional metadata]'")
+            if values[1].isalpha():
+                raise ValueError(
+                    f"Name cannot contain spaces, '{values[0]} {values[1]}'")
             metadata = None
-            if len(values) == 4:
-                items = values[3].strip("[]").split()
+            if meta:
+                if not meta.endswith("]"):
+                    raise SyntaxError(
+                        f"Wrong syntax for map file, hub '{values[0]}'")
+                items = meta.strip("]").split()
                 params: Dict[str, str] = {}
                 for item in items:
                     key_value: List[Any] = item.split("=")
                     if len(key_value) != 2:
                         raise SyntaxError(
-                            f"Wrong map file syntax, huh {values[0]}: {item}")
+                            f"Wrong map file syntax, hub {values[0]}: {item}")
                     if key_value[1].isdigit():
                         key_value[1] = int(key_value[1])
                     params[key_value[0]] = key_value[1]
@@ -49,25 +58,47 @@ class Parser():
             return Connection(**params)
 
         with open(file_name) as file:
-            content = [line.strip() for line in file if line.strip()
-                       and not line.startswith('#')]
+            content = [line.strip() for line in file]
         if not content:
             raise SyntaxError("Empty map file")
 
-        first_line = content[0].split(": ")
-        if first_line[0] == "nb_drones":
-            nb_drones = int(first_line[1])
-            self._engine.set_nb_drones(nb_drones)
-        else:
-            raise SyntaxError("Wrong syntax for map file, line 1")
+        for i, line in enumerate(content, 1):
+            if line.startswith('#') or not len(line):
+                continue
+            first_line = line.split(": ")
+            if first_line[0] == "nb_drones" and len(first_line) == 2:
+                nb_dr_msg = f"Value error, nb_drones must be a positive integer"
+                try:
+                    nb_drones = int(first_line[1])
+                except ValueError:
+                    raise ValueError(nb_dr_msg)
+                if nb_drones <= 0: 
+                    raise ValueError(nb_dr_msg)
+                self._engine.set_nb_drones(nb_drones)
+            else:
+                raise SyntaxError("Wrong syntax for map file, "
+                                  "line 1 must specify 'nb_drones: <nb>'")
+            break
 
-        for n, line in enumerate(content[1:], 2):
+        for n, line in enumerate(content[i:], i + 1):
+            if line.startswith('#') or not len(line):
+                continue
             parsed_line = line.split(": ")
             if len(parsed_line) != 2:
                 raise SyntaxError(f"Wrong syntax for map file, line {n}")
             elif "hub" in parsed_line[0]:
-                if parsed_line[0] in ["start_hub", "end_hub", "hub"]:
-                    zone = create_zone(parsed_line[1])
+                hub_keys: List[str] = ["start_hub", "end_hub", "hub"]
+                if parsed_line[0] in hub_keys:
+                    try:
+                        zone = create_zone(parsed_line[1])
+                    except ValidationError as ve:
+                        error = ve.errors()[0]
+                        field = " -> ".join(str(loc) for loc in error["loc"])
+                        raise ValueError(
+                            f"Error in line {n}: '{field}' {error['msg']}")
+                    except Exception as e:
+                        raise ValueError(
+                            f"Error in line {n}: {e}")
                     self._map_graph.add_zone(zone)
                     if parsed_line[0] == "start_hub":
                         self._map_graph.set_start_zone(zone)
@@ -76,10 +107,15 @@ class Parser():
                 else:
                     print(parsed_line)
                     raise SyntaxError(
-                            f"Wrong syntax for map file, hub line {n}")
-            elif parsed_line[0].startswith("connection"):
+                            f"Wrong syntax for map file, hub line: '{n}'"
+                            f"\n Valid keys are {hub_keys}")
+            elif parsed_line[0] == "connection":
                 conn = create_connection(parsed_line[1])
                 self._map_graph.add_connection(conn)
+            elif parsed_line[0] == "nb_drones":
+                raise SyntaxError(
+                            f"Wrong syntax for map file, line: '{n}'"
+                            "\n nb_drones can't be defined twice")
             else:
                 raise SyntaxError(f"Wrong key for map file, line {n}")
 

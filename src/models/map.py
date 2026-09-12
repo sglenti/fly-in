@@ -22,21 +22,29 @@ class Map():
 
     def get_end(self) -> str:
         if self._end_zone is None:
-            raise RuntimeError("Map has no end zone")
+            raise RuntimeError("Map has no end zone!")
         end_zone: str = self._end_zone.name
         return end_zone
 
     def get_start(self) -> str:
         if self._start_zone is None:
-            raise RuntimeError("Map has no end zone")
+            raise RuntimeError("Map has no start zone!")
         start_zone: str = self._start_zone.name
         return start_zone
 
     def set_start_zone(self, zone: Zone) -> None:
         if self._start_zone is not None:
             raise ValueError(
-                    f"Map already has a start zone: {self._start_zone.name}")
+                f"Cannot set '{zone.name}' as start zone"
+                f"\n Map already has a start zone: '{self._start_zone.name}'")
         self._start_zone = zone
+
+    def set_end_zone(self, zone: Zone) -> None:
+        if self._end_zone is not None:
+            raise ValueError(
+                f"Cannot set '{zone.name}' as end zone"
+                f"\n Map already has an end zone: '{self._end_zone.name}'")
+        self._end_zone = zone
 
     def is_restricted(self, zone: str) -> bool:
         return bool(
@@ -53,16 +61,10 @@ class Map():
                     return conn
         return None
 
-    def set_end_zone(self, zone: Zone) -> None:
-        if self._end_zone is not None:
-            raise ValueError(
-                    f"Map already has an end zone: {self._end_zone.name}")
-        self._end_zone = zone
-
     def add_zone(self, zone: Zone) -> None:
         # add to registry (if duplicates, raise error)
         if zone.name in self._zones.keys():
-            raise ValueError("Duplicated hub name")
+            raise ValueError(f"Duplicated zone name: '{zone.name}'")
         self._zones[zone.name] = zone
 
     def add_connection(self, connection: Connection) -> None:
@@ -70,6 +72,10 @@ class Map():
         self._connections.append(connection)
 
     def initialize_graph(self) -> None:
+        if self._start_zone is None:
+            raise ValueError("Map needs a start zone!")
+        if self._end_zone is None:
+            raise ValueError("Map needs an end zone!")
         if self._start_zone == self._end_zone:
             raise ValueError("Start and End hubs must differ!")
         # fill adj_list (if duplicates, raise error)

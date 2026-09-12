@@ -1,9 +1,11 @@
+import sys
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
 from models import Map
 from parser import Parser
 from simulation import SimulationEngine
 from view import ConsoleRenderer
 from view import WindowRenderer
-import sys
 import pygame
 import time
 from rich.console import Console
@@ -23,10 +25,10 @@ class Application:
         parser = Parser(self.map_graph, self.engine)
         try:
             parser.parse_file(self.map_file)
-        except OSError as e:
-            print(e)
+            self.map_graph.initialize_graph()
+        except Exception as e:
+            self.error_console.print(f"Map File Error:\n {e}")
             sys.exit()
-        self.map_graph.initialize_graph()
     #    print(sim_map.to_json())
     #    print(sim_engine._drones)
     #    sim_map.print_topology()

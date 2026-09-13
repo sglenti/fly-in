@@ -23,7 +23,7 @@ class Parser():
                 else:
                     raise SyntaxError(
                         f"Wrong syntax for map file, hub '{values[0]}'"
-                        "\n Format: 'name x y \[optional metadata]'")
+                        "\n Format: 'name x y [optional metadata]'")
             metadata = None
             if meta:
                 if not meta.endswith("]"):
@@ -35,11 +35,21 @@ class Parser():
                         f"Wrong syntax (too many brackets), hub '{values[0]}'")
                 items = meta.split()
                 params: Dict[str, str] = {}
+                valid_keys = ["zone", "color", "max_drones"]
                 for item in items:
                     key_value: List[Any] = item.split("=")
                     if len(key_value) != 2:
                         raise SyntaxError(
-                            f"Wrong map file syntax, hub {values[0]}: {item}")
+                            f"Wrong hub metadata syntax '{item}'"
+                            "\n Format: '[key=value ...]'")
+                    if key_value[0] not in valid_keys:
+                        raise SyntaxError(
+                            f"Invalid key for hub metadata '{item}'"
+                            f"\n Valid keys: {valid_keys}")
+                    if key_value[0] in params:
+                        raise SyntaxError(
+                            f"Wrong hub metadata syntax"
+                            f"\n '{key_value[0]}' cannot be defined twice")
                     if key_value[1].isdigit():
                         key_value[1] = int(key_value[1])
                     params[key_value[0]] = key_value[1]
@@ -50,12 +60,12 @@ class Parser():
                 name=values[0], x=values[1], y=values[2], metadata=metadata)
 
         def create_connection(data: str) -> Connection:
-            values: List[str] = data.split(" ")
+            values: List[str] = data.split(" [")
             hubs: List[str] = values[0].split("-")
-            if len(hubs) != 2 or len(values) > 2:
+            if len(hubs) != 2 or len(values) > 2 or " " in values[0]:
                 raise SyntaxError(
                         f"Wrong connection format: '{values[0]}'"
-                        "\n Format: zone1-zone2 \[optional metadata]")
+                        "\n Format: 'zone1-zone2 [optional metadata]'")
             valid_names = self._map_graph.get_zones().keys()
             for hub in hubs:
                 if hub not in valid_names:
@@ -65,15 +75,32 @@ class Parser():
                     "end_point1": hubs[0], "end_point2": hubs[1]}
             if len(values) == 2:
                 meta = values[1]
-                if not meta.startswith("[") or not meta.endswith("]"):
+                if not meta.endswith("]"):
                     raise SyntaxError(
-                        f"Missing bracket, connection metadata '{meta}'")
-                meta = meta[1:-1]
+                        f"Missing end bracket, connection metadata '{meta}'")
+                meta = meta[:-1]
                 if "[" in meta or "]" in meta:
                     raise SyntaxError(
                         f"Too many brackets, connextion metadata '{meta}'")
-                key, value = meta.split("=")
-                params[key] = int(value)
+                if " " in meta:
+                    raise SyntaxError(
+                        f"No spaces allowed in connextion metadata '{meta}'")
+                conn_max = meta.split("=")
+                if len(conn_max) != 2:
+                    raise SyntaxError(
+                        f"Wrong format for connection metadata '{meta}'"
+                        "\n Format: '[max_link_capacity=<nb>]'")
+                key, value = conn_max
+                if key != "max_link_capacity":
+                    raise SyntaxError(
+                        f"Wrong metadata key '{key}'"
+                        "\n Format: '[max_link_capacity=<nb>]'")
+                try:
+                    params[key] = int(value)
+                except ValueError as e:
+                    raise ValueError(
+                        "Value error, "
+                        "max_link_capacity must be a positive integer")
             return Connection(**params)
 
         with open(file_name) as file:
@@ -132,6 +159,11 @@ class Parser():
                 try:
                     clean = re.sub(r'\s+', ' ', parsed_line[1].strip())
                     conn = create_connection(clean)
+                except ValidationError as ve:
+                    error = ve.errors()[0]
+                    field = " -> ".join(str(loc) for loc in error["loc"])
+                    raise ValueError(
+                        f"Error in line {n}: '{field}' {error['msg']}")
                 except Exception as e:
                     raise ValueError(
                             f"Error in line {n}: {e}")
@@ -148,31 +180,3 @@ class Parser():
             self._engine.register_drone(
                 Drone(id=f"D{i:0{len(str(nb_drones))}d}",
                       current_location=self._map_graph.start_zone_name))
-
-
-"""
-    # The Zones (name as key, object as value)
-    zones_to_add = {
-        "start": Zone(name="start", x=0, y=0),
-        "mid": Zone(name="mid", x=5, y=5,
-                    metadata=ZoneMetadata(zone_type=ZoneType.RESTRICTED)),
-        "end": Zone(name="end", x=10, y=10)
-    }
-
-    # The Connections (as a list of tuples)
-    connections_to_add = [
-        ("start", "mid"),
-        ("mid", "end")
-    ]
-        # --- The "Bootstrap" Loop ---
-        # 1. Fill Zones
-        for zone in self.zones_to_add.values():
-            self._map_graph.add_zone(zone)
-
-        # 2. Fill Connections
-        for src, dst in self.connections_to_add:
-            # Notice how we create the Connection object on the fly
-            conn = Connection(source_name=src, target_name=dst)
-            self._map_graph.add_connection(conn)
-
-"""

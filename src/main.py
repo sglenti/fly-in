@@ -9,6 +9,7 @@ from view import WindowRenderer
 import pygame
 import time
 from rich.console import Console
+from rich.markup import escape
 
 
 class Application:
@@ -27,7 +28,7 @@ class Application:
             parser.parse_file(self.map_file)
             self.map_graph.initialize_graph()
         except Exception as e:
-            self.error_console.print(f"Map File Error:\n {e}")
+            self.error_console.print(escape(f"Map File Error:\n {e}"))
             sys.exit()
     #    print(sim_map.to_json())
     #    print(sim_engine._drones)

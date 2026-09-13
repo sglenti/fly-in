@@ -2,6 +2,7 @@ from models import Map, Zone, Connection, ZoneMetadata, Drone
 from simulation import SimulationEngine
 from typing import Dict, Any, List
 from pydantic import ValidationError
+import re
 
 
 class Parser():
@@ -12,12 +13,13 @@ class Parser():
 
     def parse_file(self, file_name: str) -> None:
         def create_zone(data_str: str) -> Zone:
-            data, meta = data_str.split(" [", 1)
-            values = data.split(" ", 3)
+            data_meta = data_str.split(" [", 1)
+            values = data_meta[0].split(" ")
+            meta = data_meta[1] if len(data_meta) == 2 else None
             if len(values) != 3:
                 if values[1].isalpha():
                     raise ValueError(
-                        f"Name cannot contain spaces, '{values[0]} {values[1]}'")
+                        f"Name cannot contain space, '{values[0]} {values[1]}'")
                 else:
                     raise SyntaxError(
                         f"Wrong syntax for map file, hub '{values[0]}'"
@@ -26,8 +28,12 @@ class Parser():
             if meta:
                 if not meta.endswith("]"):
                     raise SyntaxError(
-                        f"Wrong syntax for map file, hub '{values[0]}'")
-                items = meta.strip("]").split()
+                        f"Wrong syntax (missing bracket), hub '{values[0]}'")
+                meta = meta[:-1]
+                if "[" in meta or "]" in meta:
+                    raise SyntaxError(
+                        f"Wrong syntax (too many brackets), hub '{values[0]}'")
+                items = meta.split()
                 params: Dict[str, str] = {}
                 for item in items:
                     key_value: List[Any] = item.split("=")
@@ -44,27 +50,29 @@ class Parser():
                 name=values[0], x=values[1], y=values[2], metadata=metadata)
 
         def create_connection(data: str) -> Connection:
-            values: List[str] = data.split(" [", 1)
-            if len(values) > 2:
-                raise SyntaxError(
-                        f"Wrong syntax for Connection"
-                        "\n Format: zone1-zone2 \[optional metadata]")
+            values: List[str] = data.split(" ")
             hubs: List[str] = values[0].split("-")
-            if len(hubs) != 2:
-                raise ValueError(f"Wrong connection format: '{values[0]}'")
+            if len(hubs) != 2 or len(values) > 2:
+                raise SyntaxError(
+                        f"Wrong connection format: '{values[0]}'"
+                        "\n Format: zone1-zone2 \[optional metadata]")
             valid_names = self._map_graph.get_zones().keys()
-            #for hub in hubs:
-            #    if hub not in valid_names:
-            #        raise ValueError(
-            #                f"Invalid Zone name for Connection: '{hub}'")
+            for hub in hubs:
+                if hub not in valid_names:
+                    raise ValueError(
+                            f"Invalid Zone name for Connection: '{hub}'")
             params: Dict[str, str | int] = {
                     "end_point1": hubs[0], "end_point2": hubs[1]}
             if len(values) == 2:
                 meta = values[1]
-                if not meta.endswith("]"):
+                if not meta.startswith("[") or not meta.endswith("]"):
                     raise SyntaxError(
-                        f"Wrong syntax for connection metadata '{values[0]}'")
-                key, value = values[1].strip("[]").split("=")
+                        f"Missing bracket, connection metadata '{meta}'")
+                meta = meta[1:-1]
+                if "[" in meta or "]" in meta:
+                    raise SyntaxError(
+                        f"Too many brackets, connextion metadata '{meta}'")
+                key, value = meta.split("=")
                 params[key] = int(value)
             return Connection(**params)
 
@@ -101,7 +109,8 @@ class Parser():
                 hub_keys: List[str] = ["start_hub", "end_hub", "hub"]
                 if parsed_line[0] in hub_keys:
                     try:
-                        zone = create_zone(parsed_line[1])
+                        clean = re.sub(r'\s+', ' ', parsed_line[1].strip())
+                        zone = create_zone(clean)
                     except ValidationError as ve:
                         error = ve.errors()[0]
                         field = " -> ".join(str(loc) for loc in error["loc"])
@@ -116,13 +125,13 @@ class Parser():
                     elif parsed_line[0] == "end_hub":
                         self._map_graph.set_end_zone(zone)
                 else:
-                    print(parsed_line)
                     raise SyntaxError(
                             f"Wrong hub syntax, line {n}"
                             f"\n Valid keys are {hub_keys}")
             elif parsed_line[0] == "connection":
                 try:
-                    conn = create_connection(parsed_line[1])
+                    clean = re.sub(r'\s+', ' ', parsed_line[1].strip())
+                    conn = create_connection(clean)
                 except Exception as e:
                     raise ValueError(
                             f"Error in line {n}: {e}")

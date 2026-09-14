@@ -46,14 +46,16 @@ class SimulationEngine():
             raise RuntimeError(
                 "Critical error: unable to find a path between start and goal")
 
-    def calculate_paths(self) -> None:
+    def calculate_paths(self, heuristics: bool) -> None:
         for d in self._drones.values():
             d.path = self._path_finder.time_dijkstra(
                         self._map,
                         d,
                         self._reservations,
                         self._link_res,
-                        self._map.get_end())
+                        self._map.get_end(),
+                        heur=heuristics
+                    )
             start: str = self._map.get_start()
             end: str = self._map.get_end()
             current_pos = start

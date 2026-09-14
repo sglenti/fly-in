@@ -10,16 +10,24 @@ import pygame
 import time
 from rich.console import Console
 from rich.markup import escape
+import argparse
+from typing import List
 
 
 class Application:
-    def __init__(self, map_file: str) -> None:
+    def __init__(
+            self,
+            map_file: str,
+            interactive: bool = False,
+            heuristics: bool = False
+            ) -> None:
         self.map_file = map_file
         self.map_graph = Map()
         self.engine = SimulationEngine(self.map_graph)
         self.renderer = ConsoleRenderer(self.map_graph)
         self.error_console = Console(stderr=True)
-        self.interactive = False
+        self.interactive = interactive
+        self.heuristics = heuristics
 
     def run(self) -> None:
         # 1. Parse and Build:
@@ -31,17 +39,14 @@ class Application:
         except Exception as e:
             self.error_console.print(escape(f"Map File Error:\n {e}"))
             sys.exit()
-    #    print(sim_map.to_json())
-    #    print(sim_engine._drones)
-    #    sim_map.print_topology()
 
         # 2. Gentlemen, starts engines:
-        self.engine.calculate_paths()
+        self.engine.calculate_paths(self.heuristics)
         clock = pygame.time.Clock()
 
         # 3. Prepare views:
         console_view = ConsoleRenderer(self.map_graph)
-        window_view = WindowRenderer(self.map_graph, 75)
+        window_view = WindowRenderer(self.map_graph, 25)
         console_view.start_session()
 
         # 4. Execute simulation:
@@ -84,9 +89,6 @@ class Application:
                 self.engine.stop()
             time.sleep(1.5)
 
-        # rprint(self.map_graph.get_adj_list())
-        # rprint(self.engine.get_link_res())
-
         # 5. Closing
         while pygame.get_init() and pygame.display.get_surface() is not None:
             window_view.draw_static_map()
@@ -100,12 +102,24 @@ class Application:
         console_view.end_session()
 
 
-def main() -> None:
-    if len(sys.argv) < 2:
-        print("Usage: python3 -m src.main <map_file>")
+def main(args: List[str] = sys.argv[1:]) -> None:
+    interactive = False
+    heuristics = False
+    if "--interactive" in args:
+        interactive = True
+        args.remove("--interactive")
+    if "--heuristics" in args:
+        heuristics = True
+        args.remove("--heuristics")
+    if len(args) != 1:
+        print("Usage: python3 -m src [option] <map_file>"
+              "\n Options:"
+              "\n -i    interactive: step by step simulation"
+              "\n -h    heuristics: path finding balanced with Euclidian distance to goal")
         sys.exit(1)
-
-    app = Application(sys.argv[1])
+    map_file: str = args[0]
+    # app = Application(map_file, interactive, heuristics)
+    app = Application(map_file, interactive, heuristics)
     app.run()
 
 

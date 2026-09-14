@@ -36,6 +36,16 @@ class SimulationEngine():
     def get_link_res(self) -> Dict[Tuple[Connection, int], int]:
         return self._link_res
 
+    def check_connectivity(self) -> None:
+        if not self._path_finder.base_dijkstra(
+                self._map.get_zones(),
+                self._map.get_adj_list(),
+                self._map.get_start(),
+                self._map.get_end()
+                ):
+            raise RuntimeError(
+                "Critical error: unable to find a path between start and goal")
+
     def calculate_paths(self) -> None:
         for d in self._drones.values():
             d.path = self._path_finder.time_dijkstra(

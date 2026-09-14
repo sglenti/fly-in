@@ -5,26 +5,19 @@ from typing import Dict, List, Tuple
 
 
 class PathFinder():
-    def update(self) -> None:
-        pass
 
-    def dijkstra(
+    def base_dijkstra(
             self,
             zones: Dict[str, Zone],
             adj_list: Dict[str, List[Connection]],
-            drone: Drone
-            ) -> Dict[str, str] | None:
-        if not drone.current_location:
-            return None
-
-        # Simple Dijkstra structure
-        src = drone.current_location
+            src: str,
+            goal: str
+            ) -> bool:
 
         # Min-heap (priority queue) storing pairs of (distance, node)
         priority_queue: List[Tuple[int, str]] = []
-
+        # Initialize distances as maxsize
         distances = {k: sys.maxsize for k in adj_list}
-        parent = {}
 
         # Distance from source to itself is 0
         distances[src] = 0
@@ -37,6 +30,10 @@ class PathFinder():
             # If this distance not the latest shortest one, skip it
             if current_dist > distances[current_node]:
                 continue
+            
+            # We reach goal:
+            if current_node == goal:
+                return True
 
             # Explore all neighbors of the current vertex
             for conn in adj_list[current_node]:
@@ -47,13 +44,10 @@ class PathFinder():
                 # If we found a shorter path to v through u, update it
                 if distances[current_node] + weight < distances[neighbor]:
                     distances[neighbor] = distances[current_node] + weight
-                    parent[neighbor] = current_node
                     heapq.heappush(
                             priority_queue, (distances[neighbor], neighbor))
 
-        # print("Distances dict:", distances)
-        # print("Parents dict:", parent)
-        return parent
+        return False
 
     def time_dijkstra(
             self,
@@ -186,8 +180,4 @@ class PathFinder():
                                 neighbor,
                                 current_time + weight)
                             )
-
-        # print("Distances dict:", distances)
-        # print("Parents dict:", parent)
-        # print("reservations:", reservations)
         return reconstruct_path(parent, (src, time), current_state)

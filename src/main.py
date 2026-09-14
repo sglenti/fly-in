@@ -27,6 +27,7 @@ class Application:
         try:
             parser.parse_file(self.map_file)
             self.map_graph.initialize_graph()
+            self.engine.check_connectivity()
         except Exception as e:
             self.error_console.print(escape(f"Map File Error:\n {e}"))
             sys.exit()

@@ -24,8 +24,8 @@ class Parser():
                     raise SyntaxError(
                         f"Wrong syntax for map file, hub '{values[0]}'"
                         "\n Format: 'name x y [optional metadata]'")
-            metadata = None
-            if meta:
+            params: Dict[str, str] = {}
+            if meta is not None:
                 if not meta.endswith("]"):
                     raise SyntaxError(
                         f"Wrong syntax (missing bracket), hub '{values[0]}'")
@@ -34,7 +34,6 @@ class Parser():
                     raise SyntaxError(
                         f"Wrong syntax (too many brackets), hub '{values[0]}'")
                 items = meta.split()
-                params: Dict[str, str] = {}
                 valid_keys = ["zone", "color", "max_drones"]
                 for item in items:
                     key_value: List[Any] = item.split("=")
@@ -55,7 +54,7 @@ class Parser():
                     params[key_value[0]] = key_value[1]
                 if 'zone' in params:
                     params['zone_type'] = params.pop('zone')
-                metadata = ZoneMetadata(**params)
+            metadata = ZoneMetadata(**params)
             return Zone(
                 name=values[0], x=values[1], y=values[2], metadata=metadata)
 
@@ -81,7 +80,7 @@ class Parser():
                 meta = meta[:-1]
                 if "[" in meta or "]" in meta:
                     raise SyntaxError(
-                        f"Too many brackets, connextion metadata '{meta}'")
+                        f"Too many brackets, connection metadata '{meta}'")
                 if " " in meta:
                     raise SyntaxError(
                         f"No spaces allowed in connextion metadata '{meta}'")

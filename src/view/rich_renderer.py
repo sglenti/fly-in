@@ -1,4 +1,4 @@
-from rich.console import Console, ConsoleOptions, RenderResult
+from rich.console import Console 
 from rich.layout import Layout
 from rich.table import Table
 from rich.live import Live
@@ -10,54 +10,6 @@ from src.models import Map, Drone
 from typing import Dict, List
 
 
-class BottomLog:
-    def __init__(self) -> None:
-        self.messages: list[str] = []
-
-    def add(self, message: str) -> None:
-        self.messages.append(message)
-
-    def __rich_console__(
-            self,
-            console: Console,
-            options: ConsoleOptions,
-            ) -> RenderResult:
-        # These are the dimensions allocated to the lower layout region.
-        panel_width = options.max_width
-        panel_height = options.max_height
-        padding = 0
-        # Account for the Panel border and padding.
-        content_width = max(1, panel_width - 2 - padding * 2)
-        content_height = max(1, panel_height - 2 - padding * 2)
-        visual_lines: list[Text] = []
-        for message in self.messages:
-            text = Text(message)
-            # Wrap according to the actual current lower-region width.
-            visual_lines.extend(
-                    text.wrap(console, width=content_width)
-                    )
-        # Keep the bottom-most visual lines.
-        if len(visual_lines) > content_height:
-            # Keep the newest visual lines.
-            visible_lines = visual_lines[-content_height:]
-        else:
-            # Push existing lines to the bottom.
-            empty_lines = [
-                    Text()
-                    for _ in range(content_height - len(visual_lines))
-                    ]
-            visible_lines = empty_lines + visual_lines
-
-        # visible_lines = rendered_lines[-content_height:]
-        content = Text("\n").join(visible_lines)
-        yield Panel(
-                content,
-                width=panel_width,
-                height=panel_height,
-                padding=padding,
-                )
-
-
 class ConsoleRenderer:
     def __init__(self, map_graph: Map) -> None:
         self._console = Console()
@@ -65,7 +17,6 @@ class ConsoleRenderer:
         self._live: Live
         self._layout = Layout()
         self.log_history: List[str] = []
-        self._log = BottomLog()
 
     def start_session(self) -> None:
         """Starts the live terminal display session."""
@@ -75,10 +26,12 @@ class ConsoleRenderer:
             Layout(name="upper", size=upper_size),
             Layout(name="lower")
         )
-        # Initial empty table:
+        # Initial empty table and layout:
         table = Table()
         self._layout["upper"].update(table)
-        self._layout["lower"].update(self._log)
+        self._layout["lower"].update(
+                Panel("", title="Turn Log", border_style="blue",
+                      ))
         self._live = Live(self._layout, console=self._console,
                           auto_refresh=False)
         self._live.start()
@@ -89,16 +42,6 @@ class ConsoleRenderer:
             self._live.stop()
 
     def print_line(self, turn: int, moves: List[str]) -> None:
-        # move_log_string = f"Turn {turn}: {' '.join(moves)}"
-        # self._log.add(move_log_string)
-        # try:
-        #     self._live.refresh()
-        # except Exception:
-        #     self._live.stop()
-        #     console.print_exception()
-        #     raise
-        # return
-
         move_log_string = f"[yellow]Turn {turn}:[/yellow] {' '.join(moves)}"
         self.log_history.append(move_log_string)
         # Last 50 lines
@@ -139,26 +82,19 @@ class ConsoleRenderer:
         max_drone_len = max((len(d) for d in drones), default=3) + 2
         drl = min(max_drone_len * d_limit, max(10, nb_d * max_drone_len)) - 1
 
-        # 2. Reserve space for your bottom log panel (e.g., 10 rows)
-        # and table headers/borders (e.g., 5 rows)
+        # 2. Reserve space for bottom log panel
+        # and table headers/borders (5 rows)
         reserved_space = 15
         max_table_rows = max(5, h - reserved_space) - 5
 
-        # 3. If you have more zones than max_table_rows, slice the list!
-        # (Prioritizing zones that currently have drones)
+        # 3. If we have more zones than max_table_rows, slice the list!
+        # (Following drones moving front)
         all_zones = list(self.map_graph.get_zones().values())
-        # Sort so zones with drones are at the top, or just take a slice
-        """
-        active_zones = [z for z in all_zones if (any(
-            d.current_location == z.name for d in drones.values())
-            or any((d.path[0][0] == z.name and d.status == "in_transit"
-                and d.current_location == None) for d in drones.values()))]
-        """
         active_zones = [z for z in all_zones if (any(
             ((d.path and d.path[0][0] == z.name)
                 or d.current_location == z.name)
             for d in drones.values()))]
-        # Combine them up to our budget limit
+        # If we cannot fit everything, follow drones
         if len(all_zones) > max_table_rows:
             last_index = max(
                     max_table_rows - 1, all_zones.index(active_zones[-1]))
@@ -184,8 +120,7 @@ class ConsoleRenderer:
         table.add_column("Max", no_wrap=True, justify="center", min_width=mxl)
         table.add_column("Drones", justify="left", width=drl, no_wrap=True)
 
-        # logic to loop through map._adj_list and add rows...
-        # for node in self.map_graph.get_zones().values():
+        # Fill table rows:
         for node in displayed_zones:
             # for node in displayed_zones:
             neighbor_strings = []

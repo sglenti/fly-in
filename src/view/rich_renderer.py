@@ -192,7 +192,7 @@ class ConsoleRenderer:
             neighbors = {
                 (c.end_point2 if c.end_point1 == node.name else c.end_point1):
                 c.max_link_capacity
-                for c in self.map_graph._adj_list[node.name]}
+                for c in self.map_graph.get_adj_list().get(node.name, [])}
 
             # Link capacity
             for name, cap in neighbors.items():

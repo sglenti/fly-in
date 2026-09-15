@@ -1,4 +1,4 @@
-src/__init__.py
+src/__main__.py
 src/main.py
 src/parser.py
 src/models/__init__.py

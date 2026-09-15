@@ -114,8 +114,8 @@ def main(args: List[str] = sys.argv[1:]) -> None:
     if len(args) != 1:
         print("Usage: python3 -m src [option] <map_file>"
               "\n Options:"
-              "\n -i    interactive: step by step simulation"
-              "\n -h    heuristics: path finding balanced with Euclidian distance to goal")
+              "\n --interactive     step-by-step mode"
+              "\n --heuristics      enable A* heuristics")
         sys.exit(1)
     map_file: str = args[0]
     # app = Application(map_file, interactive, heuristics)

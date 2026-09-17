@@ -30,7 +30,7 @@ class PathFinder():
             # If this distance not the latest shortest one, skip it
             if current_dist > distances[current_node]:
                 continue
-            
+
             # We reach goal:
             if current_node == goal:
                 return True

@@ -1,6 +1,5 @@
 import sys
 import os
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
 from src.models import Map
 from src.parser import Parser
 from src.simulation import SimulationEngine
@@ -10,8 +9,8 @@ import pygame
 import time
 from rich.console import Console
 from rich.markup import escape
-import argparse
 from typing import List
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
 
 
 class Application:
@@ -47,7 +46,8 @@ class Application:
         # 3. Prepare views:
         console_view = ConsoleRenderer(self.map_graph)
         window_view = WindowRenderer(self.map_graph, 80)
-        pygame.display.set_caption(f"Fly-in - {os.path.basename(self.map_file)}")
+        pygame.display.set_caption(
+                f"Fly-in - {os.path.basename(self.map_file)}")
         console_view.start_session()
 
         # 4. Execute simulation:

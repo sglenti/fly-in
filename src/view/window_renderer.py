@@ -15,7 +15,8 @@ def get_rgb(color_name: Optional[str]) -> tuple[int, int, int]:
     # Then try appending "1" if it fails (like "orange" -> "orange1")
     for variant in [clean_name, f"{clean_name}1"]:
         try:
-            return pygame.Color(variant)
+            red, green, blue, alpha = pygame.Color(variant)
+            return red, green, blue
         except Exception:
             continue
 
@@ -41,7 +42,7 @@ class WindowRenderer:
         # Simple window sizing based on map bounds
         self.screen = pygame.display.set_mode(self._set_size())
         self.font = pygame.font.SysFont("Arial", 10)
-        self.radious: int  = 20
+        self.radious: int = 20
         # drone_id -> zone_name:
         self.curr_drones_pos: Dict[str, str] = {}
         self.prev_drones_pos: Dict[str, str] = {}
@@ -160,17 +161,17 @@ class WindowRenderer:
             )
             # Draw label
             lines = zone.name.replace("_", " ").split(" ", 2)
-            line_height = self.font.get_linesize()
+            lineheight = self.font.get_linesize()
             for nb, line in enumerate(lines):
                 line = line[:16]
                 shadow_surf = self.font.render(line, True, shadow_color)
                 shadow_rect = shadow_surf.get_rect(
-                    midtop=(pos[0] + 1, pos[1] + rad + 1 + nb * line_height + 2)
+                    midtop=(pos[0] + 1, pos[1] + rad + 1 + nb * lineheight + 2)
                 )
                 self.screen.blit(shadow_surf, shadow_rect)
                 text_surf = self.font.render(line, True, text_color)
                 text_rect = text_surf.get_rect(
-                    midtop=(pos[0], pos[1] + rad + nb * line_height + 2)
+                    midtop=(pos[0], pos[1] + rad + nb * lineheight + 2)
                 )
                 self.screen.blit(text_surf, text_rect)
         pygame.display.flip()
@@ -265,7 +266,7 @@ class WindowRenderer:
             for d_id, drone in in_transit.items():
                 if not drone.current_location:
                     self.curr_drones_pos[d_id] = self.prev_drones_pos[d_id]
-                    start_zone_name = self.prev_drones_pos.getint = 20(d_id)
+                    start_zone_name = self.prev_drones_pos.get(d_id)
                     target_zone_name = drone.path[0][0]
                 else:
                     start_zone_name = self.prev_drones_pos.get(d_id)
@@ -341,7 +342,8 @@ class WindowRenderer:
                 if excess > 0:
                     line = "+" + str(excess)
                     pos = self._to_pixels(zone.x, zone.y)
-                    excess_surf = self.font.render(line, True, get_rgb("white"))
+                    excess_surf = self.font.render(
+                            line, True, get_rgb("white"))
                     excess_rect = excess_surf.get_rect(
                         midtop=(pos[0] + rad, pos[1] - 2 * rad)
                     )

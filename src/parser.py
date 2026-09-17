@@ -14,12 +14,12 @@ class Parser():
     def parse_file(self, file_name: str) -> None:
         def create_zone(data_str: str) -> Zone:
             data_meta = data_str.split(" [", 1)
-            values = data_meta[0].split(" ")
+            values: List[Any] = data_meta[0].split(" ")
             meta = data_meta[1] if len(data_meta) == 2 else None
             if len(values) != 3:
                 if values[1].isalpha():
                     raise ValueError(
-                        f"Name cannot contain space, '{values[0]} {values[1]}'")
+                        f"Name can't contain space, '{values[0]} {values[1]}'")
                 else:
                     raise SyntaxError(
                         f"Wrong syntax for map file, hub '{values[0]}'"
@@ -54,7 +54,7 @@ class Parser():
                     params[key_value[0]] = key_value[1]
                 if 'zone' in params:
                     params['zone_type'] = params.pop('zone')
-            metadata = ZoneMetadata(**params)
+            metadata = ZoneMetadata.model_validate(params)
             return Zone(
                 name=values[0], x=values[1], y=values[2], metadata=metadata)
 
@@ -96,11 +96,11 @@ class Parser():
                         "\n Format: '[max_link_capacity=<nb>]'")
                 try:
                     params[key] = int(value)
-                except ValueError as e:
+                except ValueError:
                     raise ValueError(
                         "Value error, "
                         "max_link_capacity must be a positive integer")
-            return Connection(**params)
+            return Connection.model_validate(params)
 
         with open(file_name) as file:
             content = [line.strip() for line in file]
@@ -112,12 +112,12 @@ class Parser():
                 continue
             first_line = line.split(": ")
             if first_line[0] == "nb_drones" and len(first_line) == 2:
-                nb_dr_msg = f"Value error, nb_drones must be a positive integer"
+                nb_dr_msg = "Value error, nb_drones must be a positive integer"
                 try:
                     nb_drones = int(first_line[1])
                 except ValueError:
                     raise ValueError(nb_dr_msg)
-                if nb_drones <= 0: 
+                if nb_drones <= 0:
                     raise ValueError(nb_dr_msg)
                 self._engine.set_nb_drones(nb_drones)
             else:

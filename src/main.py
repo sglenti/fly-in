@@ -1,11 +1,11 @@
 import sys
 import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
-from models import Map
-from parser import Parser
-from simulation import SimulationEngine
-from view import ConsoleRenderer
-from view import WindowRenderer
+from src.models import Map
+from src.parser import Parser
+from src.simulation import SimulationEngine
+from src.view import ConsoleRenderer
+from src.view import WindowRenderer
 import pygame
 import time
 from rich.console import Console

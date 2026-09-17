@@ -72,13 +72,15 @@ class Map():
         self._connections.append(connection)
 
     def initialize_graph(self) -> None:
+        # check for start and end zones:
         if self._start_zone is None:
             raise ValueError("Map needs a start zone!")
         if self._end_zone is None:
             raise ValueError("Map needs an end zone!")
         if self._start_zone == self._end_zone:
             raise ValueError("Start and End hubs must differ!")
-        # fill adj_list (if duplicates, raise error)
+
+        # fill adj_list (if duplicates or invalind zone, raise error):
         processed_pairs: Set[Tuple[str, str]] = set()
 
         for conn in self._connections:

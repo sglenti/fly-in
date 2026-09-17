@@ -31,7 +31,7 @@ class PathFinder():
             if current_dist > distances[current_node]:
                 continue
 
-            # We reach goal:
+            # We reached goal:
             if current_node == goal:
                 return True
 
@@ -61,11 +61,11 @@ class PathFinder():
             ) -> List[Tuple[str, int]]:
 
         def heuristic(node_name: str) -> float:
+            # Euclidean distance to goal
             if not heur:
                 return float(0)
             z = map_graph.get_zones()[node_name]
             goal = map_graph.get_zones()[map_graph.get_end()]
-            # Euclidean distance to goal
             return float(((z.x - goal.x) ** 2 + (z.y - goal.y) ** 2) ** 0.5)
 
         def reconstruct_path(
@@ -88,11 +88,10 @@ class PathFinder():
         if not drone.current_location:
             return []
         zones: Dict[str, Zone] = map_graph.get_zones()
-        # connections: List[Connection] = map_graph.get_conn_list()
         adj_list: Dict[str, List[Connection]] = map_graph.get_adj_list()
         src: str = drone.current_location
 
-        # Min-heap (priority queue) storing pairs of (time-space, distance)
+        # Min-heap storing (est_cost, cost, priority, node, time)
         priority_queue: List[Tuple[float, int, float, str, int]] = []
 
         distances: Dict[Tuple[str, int], int] = {(src, 0): 0}
@@ -115,7 +114,7 @@ class PathFinder():
             if current_node == goal:
                 break
 
-            # Is there capacity to wait here?:
+            # Check if drone can wait here, at this time:
             wait_state = (current_node, current_time + 1)
             if wait_state not in reservations:
                 distances[wait_state] = cost + 1

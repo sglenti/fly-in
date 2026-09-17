@@ -46,7 +46,8 @@ class Application:
 
         # 3. Prepare views:
         console_view = ConsoleRenderer(self.map_graph)
-        window_view = WindowRenderer(self.map_graph, 25)
+        window_view = WindowRenderer(self.map_graph, 80)
+        pygame.display.set_caption(f"Fly-in - {os.path.basename(self.map_file)}")
         console_view.start_session()
 
         # 4. Execute simulation:

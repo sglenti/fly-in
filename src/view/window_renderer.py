@@ -1,4 +1,5 @@
 import pygame
+import pygame.gfxdraw
 import math
 from rich.color import Color
 from src.models import Map, Drone, DroneStatus, Connection
@@ -135,28 +136,39 @@ class WindowRenderer:
                              self._to_pixels(z2.x, z2.y), 2)
 
         # 2. Draw Zones (Nodes)
+        rad: int = 20
+        text_color = (255, 255, 255)
+        shadow_color = (0, 0, 0)
         for zone in self.map_graph.get_zones().values():
             pos = self._to_pixels(zone.x, zone.y)
-            # Draw circle
-            pygame.draw.circle(
-                    self.screen, get_rgb(zone.metadata.color), pos, 20)
+            zone_color = get_rgb(zone.metadata.color)
+            # Draw antialised circle
+            pygame.gfxdraw.filled_circle(
+                self.screen,
+                pos[0],
+                pos[1],
+                rad,
+                zone_color
+            )
+            # Antialiased outline
+            pygame.gfxdraw.aacircle(
+                self.screen,
+                pos[0],
+                pos[1],
+                rad,
+                zone_color
+            )
             # Draw label
-            # 1. Prepare your colors
-            text_color = (255, 255, 255)
-            shadow_color = (0, 0, 0)  # Black shadow
-
-            # 2. Render Shadow
             shadow_surf = self.font.render(zone.name, True, shadow_color)
-            self.screen.blit(
-                    shadow_surf, (
-                        pos[0] - (len(zone.name) / 2) * 5 + 1, pos[1] + 20 + 1
-                        )
-                    )
-
-            # 3. Render Original Text
-            txtsurf = self.font.render(zone.name, True, text_color)
-            self.screen.blit(
-                    txtsurf, (pos[0] - (len(zone.name) / 2) * 5, pos[1] + 20))
+            text_surf = self.font.render(zone.name, True, text_color)
+            shadow_rect = shadow_surf.get_rect(
+                midtop=(pos[0] + 1, pos[1] + rad + 1)
+            )
+            text_rect = text_surf.get_rect(
+                midtop=(pos[0], pos[1] + rad)
+            )
+            self.screen.blit(shadow_surf, shadow_rect)
+            self.screen.blit(text_surf, text_rect)
         pygame.display.flip()
 
     def draw_animated_turn(

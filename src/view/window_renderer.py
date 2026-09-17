@@ -159,16 +159,20 @@ class WindowRenderer:
                 zone_color
             )
             # Draw label
-            shadow_surf = self.font.render(zone.name, True, shadow_color)
-            text_surf = self.font.render(zone.name, True, text_color)
-            shadow_rect = shadow_surf.get_rect(
-                midtop=(pos[0] + 1, pos[1] + rad + 1)
-            )
-            text_rect = text_surf.get_rect(
-                midtop=(pos[0], pos[1] + rad)
-            )
-            self.screen.blit(shadow_surf, shadow_rect)
-            self.screen.blit(text_surf, text_rect)
+            lines = zone.name.replace("_", " ").split(" ", 2)
+            line_height = self.font.get_linesize()
+            for nb, line in enumerate(lines):
+                line = line[:16]
+                shadow_surf = self.font.render(line, True, shadow_color)
+                shadow_rect = shadow_surf.get_rect(
+                    midtop=(pos[0] + 1, pos[1] + rad + 1 + nb * line_height)
+                )
+                self.screen.blit(shadow_surf, shadow_rect)
+                text_surf = self.font.render(line, True, text_color)
+                text_rect = text_surf.get_rect(
+                    midtop=(pos[0], pos[1] + rad + nb * line_height)
+                )
+                self.screen.blit(text_surf, text_rect)
         pygame.display.flip()
 
     def draw_animated_turn(

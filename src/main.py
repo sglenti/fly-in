@@ -10,7 +10,6 @@ import time
 from rich.console import Console
 from rich.markup import escape
 from typing import List
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
 
 
 class Application:

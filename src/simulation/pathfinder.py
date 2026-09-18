@@ -39,6 +39,9 @@ class PathFinder():
             for conn in adj_list[current_node]:
                 neighbor = (conn.end_point2 if conn.end_point2 != current_node
                             else conn.end_point1)
+                # If neighbor is blocked, just skip it
+                if zones[neighbor].metadata.zone_type == "blocked":
+                    continue
                 weight = (2 if zones[neighbor].
                           metadata.zone_type == "restricted" else 1)
                 # If we found a shorter path to v through u, update it

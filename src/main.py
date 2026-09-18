@@ -114,6 +114,9 @@ class Application:
         # 5. Closing
         while pygame.get_init() and pygame.display.get_surface() is not None:
             window_view.draw_static_map()
+            pygame.display.flip()
+            time.sleep(1.0)
+            console_view.print_stats()
             clock.tick(6)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:

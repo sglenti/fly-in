@@ -33,8 +33,11 @@ class ConsoleRenderer:
         self._layout["lower"].update(
                 Panel("", title="Turn Log", border_style="blue",
                       ))
-        self._live = Live(self._layout, console=self._console,
-                          auto_refresh=False)
+        self._live = Live(
+                self._layout,
+                console=self._console,
+                transient=True,
+                auto_refresh=False)
         self._live.start()
 
     def end_session(self) -> None:
@@ -188,3 +191,36 @@ class ConsoleRenderer:
     def dump_moves(self) -> None:
         for line in self.moves_history:
             print(line)
+
+    def print_stats(self) -> None:
+        turns = len(self.moves_history)
+        if turns == 0:
+            return
+        moves_per_drone: Dict[str, int] = {}
+        drone_delivery: Dict[str, int] = {}
+        total_cost: int = 0
+        for t, line in enumerate(self.moves_history, 1):
+            drones = line.split()
+            for d in drones:
+                d = d.split("-")[0]
+                moves_per_drone[d] = moves_per_drone.get(d, 0) + 1
+                drone_delivery[d] = t
+            total_cost += len(line.split())
+        avg_moves = (sum(moves_per_drone.values()) / len(moves_per_drone))
+        avg_turns = (sum(drone_delivery.values()) / len(moves_per_drone))
+        peak = max(len(l.split()) for l in self.moves_history)
+        stats: str = (
+            f"[bold cyan]Avg moves p/ drone:[/bold cyan] [green]{avg_moves:.2f}[/green]\n"
+            f"[bold cyan]Avg turns p/ drone:[/bold cyan] [green]{avg_turns:.2f}[/green]\n"
+            f"[bold cyan]Peak concurrency:[/bold cyan]   [yellow]{peak}[/yellow]\n"
+            f"[bold cyan]Total cost:[/bold cyan]         [magenta]{total_cost}[/magenta]\n"
+        )
+        aligned_stats = Align(stats, align="left", vertical="top")
+        self._layout["lower"].update(
+                Panel(
+                    aligned_stats,
+                    title="Final Metrics",
+                    border_style="blue",
+                      )
+                )
+        self._live.refresh()

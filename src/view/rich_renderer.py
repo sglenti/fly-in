@@ -17,6 +17,7 @@ class ConsoleRenderer:
         self._live: Live
         self._layout = Layout()
         self.log_history: List[str] = []
+        self.moves_history: List[str] = []
 
     def start_session(self) -> None:
         """Starts the live terminal display session."""
@@ -42,7 +43,10 @@ class ConsoleRenderer:
             self._live.stop()
 
     def print_line(self, turn: int, moves: List[str]) -> None:
-        move_log_string = f"[yellow]Turn {turn}:[/yellow] {' '.join(moves)}"
+        self.moves_history.append(' '.join(moves))
+        move_log_string = (f"[yellow]Turn {turn}:[/yellow] "
+                           f"{' '.join(moves)} "
+                           f"[cyan]({len(moves)} moves)[/cyan]")
         self.log_history.append(move_log_string)
         # Last 50 lines
         recent_logs = "\n".join(reversed(
@@ -182,5 +186,5 @@ class ConsoleRenderer:
         return table
 
     def dump_moves(self) -> None:
-        for line in self.log_history:
-            print(line[25:])
+        for line in self.moves_history:
+            print(line)

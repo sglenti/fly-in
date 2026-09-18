@@ -4,9 +4,6 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
 
 
 def main() -> None:
-    from src.main import main as run
-    run()
-    sys.exit(1)
     try:
         from src.main import main as run
         run()

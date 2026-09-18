@@ -147,7 +147,7 @@ class ConsoleRenderer:
             elif z_type == "priority":
                 type_line = f"[bold green]{type_string}[/bold green]"
             elif z_type == "blocked":
-                type_line = f"[bold dim red]{type_string}[/bold dim red]"
+                type_line = f"[bold grey53 ]{type_string}[/bold grey53]"
             else:
                 type_line = f"[blue]{type_string}[/blue]"
 

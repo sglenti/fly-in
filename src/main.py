@@ -30,6 +30,11 @@ class Application:
         self.heuristics = heuristics
 
     def run(self) -> None:
+        def close_app() -> None:
+            self.engine.stop()
+            pygame.quit()
+            console_view.end_session()
+
         # 1. Parse and Build:
         parser = Parser(self.map_graph, self.engine)
         try:
@@ -46,7 +51,7 @@ class Application:
 
         # 3. Prepare views:
         console_view = ConsoleRenderer(self.map_graph)
-        window_view = WindowRenderer(self.map_graph, 25)
+        window_view = WindowRenderer(self.map_graph, 75)
         console_view.start_session()
 
         # 4. Execute simulation:
@@ -56,6 +61,8 @@ class Application:
         self.engine.start()
         while self.engine.is_running():
             paused = self.interactive
+
+            # Step-by-step mode waiting loop:
             while paused:
                 clock.tick(6)
                 for event in pygame.event.get():
@@ -64,10 +71,18 @@ class Application:
                             paused = False
                         if event.key == pygame.K_q:
                             paused = False
-                            self.engine.stop()
-                            pygame.quit()
+                            close_app()
+            # Listen to exit event:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    close_app()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE or event.key == pygame.K_q:
+                        close_app()
             if not self.engine.is_running():
                 break
+
+            # Run the turn itself:
             try:
                 self.engine.process_turn()
             except Exception as e:
@@ -84,9 +99,11 @@ class Application:
             console_view.print_line(
                     self.engine.get_turn(), self.engine.get_turn_moves())
 
+            # Check if we finished:
             if (occupancy_map[self.map_graph.get_end()] ==
                     self.engine.get_nb_drones()):
                 self.engine.stop()
+            # A little wait between turns
             time.sleep(1.5)
 
         # 5. Closing
@@ -95,11 +112,10 @@ class Application:
             clock.tick(6)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit()
+                    close_app()
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE or event.key == pygame.K_q:
-                        pygame.quit()
-        console_view.end_session()
+                        close_app()
 
 
 def main(args: List[str] = sys.argv[1:]) -> None:
@@ -118,7 +134,6 @@ def main(args: List[str] = sys.argv[1:]) -> None:
               "\n --heuristics      enable A* heuristics")
         sys.exit(1)
     map_file: str = args[0]
-    # app = Application(map_file, interactive, heuristics)
     app = Application(map_file, interactive, heuristics)
     app.run()
 

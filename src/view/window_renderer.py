@@ -1,6 +1,6 @@
 import pygame
+import pygame.gfxdraw
 import math
-from rich.color import Color
 from src.models import Map, Drone, DroneStatus, Connection
 from typing import Optional, Dict, Tuple
 
@@ -15,7 +15,8 @@ def get_rgb(color_name: Optional[str]) -> tuple[int, int, int]:
     # Then try appending "1" if it fails (like "orange" -> "orange1")
     for variant in [clean_name, f"{clean_name}1"]:
         try:
-            return Color.parse(variant).get_truecolor()
+            red, green, blue, alpha = pygame.Color(variant)
+            return red, green, blue
         except Exception:
             continue
 
@@ -41,6 +42,7 @@ class WindowRenderer:
         # Simple window sizing based on map bounds
         self.screen = pygame.display.set_mode(self._set_size())
         self.font = pygame.font.SysFont("Arial", 10)
+        self.radious: int = 20
         # drone_id -> zone_name:
         self.curr_drones_pos: Dict[str, str] = {}
         self.prev_drones_pos: Dict[str, str] = {}
@@ -135,28 +137,43 @@ class WindowRenderer:
                              self._to_pixels(z2.x, z2.y), 2)
 
         # 2. Draw Zones (Nodes)
+        rad = self.radious
+        text_color = (255, 255, 255)
+        shadow_color = (0, 0, 0)
         for zone in self.map_graph.get_zones().values():
             pos = self._to_pixels(zone.x, zone.y)
-            # Draw circle
-            pygame.draw.circle(
-                    self.screen, get_rgb(zone.metadata.color), pos, 20)
+            zone_color = get_rgb(zone.metadata.color)
+            # Draw antialised circle
+            pygame.gfxdraw.filled_circle(
+                self.screen,
+                pos[0],
+                pos[1],
+                rad,
+                zone_color
+            )
+            # Antialiased outline
+            pygame.gfxdraw.aacircle(
+                self.screen,
+                pos[0],
+                pos[1],
+                rad,
+                zone_color
+            )
             # Draw label
-            # 1. Prepare your colors
-            text_color = (255, 255, 255)
-            shadow_color = (0, 0, 0)  # Black shadow
-
-            # 2. Render Shadow
-            shadow_surf = self.font.render(zone.name, True, shadow_color)
-            self.screen.blit(
-                    shadow_surf, (
-                        pos[0] - (len(zone.name) / 2) * 5 + 1, pos[1] + 20 + 1
-                        )
-                    )
-
-            # 3. Render Original Text
-            txtsurf = self.font.render(zone.name, True, text_color)
-            self.screen.blit(
-                    txtsurf, (pos[0] - (len(zone.name) / 2) * 5, pos[1] + 20))
+            lines = zone.name.replace("_", " ").split(" ", 2)
+            lineheight = self.font.get_linesize()
+            for nb, line in enumerate(lines):
+                line = line[:16]
+                shadow_surf = self.font.render(line, True, shadow_color)
+                shadow_rect = shadow_surf.get_rect(
+                    midtop=(pos[0] + 1, pos[1] + rad + 1 + nb * lineheight + 2)
+                )
+                self.screen.blit(shadow_surf, shadow_rect)
+                text_surf = self.font.render(line, True, text_color)
+                text_rect = text_surf.get_rect(
+                    midtop=(pos[0], pos[1] + rad + nb * lineheight + 2)
+                )
+                self.screen.blit(text_surf, text_rect)
         pygame.display.flip()
 
     def draw_animated_turn(
@@ -284,7 +301,8 @@ class WindowRenderer:
                     self._draw_abstract_drone(current_pixel_pos, drone.id)
 
             # 6. Draw docked (waiting) drones
-            for name, dock in docked_groups.items():
+            for name, docked in docked_groups.items():
+                dock = docked[:8]
                 zone = self.map_graph.get_zones().get(name)
                 if zone:
                     for d_idx, dro in enumerate(dock, 1):
@@ -309,8 +327,11 @@ class WindowRenderer:
                     docked_groups[d.current_location] = []
                 docked_groups[d.current_location].append(d.id)
         # Docked drones displaying:
-        for name, dock in docked_groups.items():
+        for name, docked in docked_groups.items():
+            excess = len(docked) - 8
+            dock = docked[:8]
             zone = self.map_graph.get_zones().get(name)
+            rad = self.radious
             if zone:
                 for d_idx, dro in enumerate(dock, 1):
                     if dro in in_transit:
@@ -318,6 +339,15 @@ class WindowRenderer:
                     docked_pos = self._get_dock_position(
                             self._to_pixels(zone.x, zone.y), d_idx, len(dock))
                     self._draw_abstract_drone(docked_pos, dro)
+                if excess > 0:
+                    line = "+" + str(excess)
+                    pos = self._to_pixels(zone.x, zone.y)
+                    excess_surf = self.font.render(
+                            line, True, get_rgb("white"))
+                    excess_rect = excess_surf.get_rect(
+                        midtop=(pos[0] + rad, pos[1] - 2 * rad)
+                    )
+                    self.screen.blit(excess_surf, excess_rect)
         # Drones still in transit have to stay in the middle of the link:
         for d_id, drone in in_transit.items():
             start_zone_name = self.prev_drones_pos.get(d_id)

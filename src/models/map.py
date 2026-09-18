@@ -1,5 +1,5 @@
 from typing import Dict, List, Optional, Set, Tuple
-from models import Zone, Connection, ZoneType
+from src.models import Zone, Connection, ZoneType
 import json
 
 
@@ -72,13 +72,15 @@ class Map():
         self._connections.append(connection)
 
     def initialize_graph(self) -> None:
+        # check for start and end zones:
         if self._start_zone is None:
             raise ValueError("Map needs a start zone!")
         if self._end_zone is None:
             raise ValueError("Map needs an end zone!")
         if self._start_zone == self._end_zone:
             raise ValueError("Start and End hubs must differ!")
-        # fill adj_list (if duplicates, raise error)
+
+        # fill adj_list (if duplicates or invalind zone, raise error):
         processed_pairs: Set[Tuple[str, str]] = set()
 
         for conn in self._connections:
@@ -96,7 +98,7 @@ class Map():
             if pair in processed_pairs:
                 raise ValueError("Duplicated connection: "
                                  f"'{conn.end_point1}-{conn.end_point2}'")
-            processed_pairs.add(pair)
+            processed_pairs.add((pair[0], pair[1]))
 
             if conn.end_point1 not in self._adj_list:
                 self._adj_list[conn.end_point1] = []

@@ -165,7 +165,6 @@ class SimulationEngine():
 
         # Paths validated, drones can move:
         for d in self._drones.values():
-            # print(f"{d.id} Path:", d.path)
             if len(d.path) and d.status != DroneStatus.DELIVERED:
                 if d.path[0][1] == self._turn:
                     # Drone arriving (or waiting) this turn:

@@ -39,10 +39,10 @@ class WindowRenderer:
                 [n.y for n in self.map_graph.get_zones().values()])
         self.x_offset = scale - self.x_min * scale
         self.y_offset = scale - self.y_min * scale
-        # Simple window sizing based on map bounds
+        # window sizing based on map bounds
         self.screen = pygame.display.set_mode(self._set_size())
-        self.font = pygame.font.SysFont("Arial", 10)
-        self.radious: int = 20
+        self.font = pygame.font.SysFont("Arial", max(10, scale // 10))
+        self.radious: int = max(20, scale // 5)
         # drone_id -> zone_name:
         self.curr_drones_pos: Dict[str, str] = {}
         self.prev_drones_pos: Dict[str, str] = {}
@@ -71,31 +71,25 @@ class WindowRenderer:
         surface = self.screen
 
         # 1. Draw the central square body
-        # We use a rect centered at (cx, cy)
+        # a rect centered at (cx, cy)
         body_rect = pygame.Rect(0, 0, size, size)
         body_rect.center = (cx, cy)
         pygame.draw.rect(surface, color, body_rect)
-
-        # Optional: Draw a dark outline on the body so it pops
-        # pygame.draw.rect(surface, get_rgb("silver"), body_rect, 1)
 
         # 2. Draw the 4 rotor circles at the corners
         # Calculate offset distance from center to corners
         offset = size // 2
         rotor_radius = 4
         rotor_color = get_rgb("black")
-
-        # Top-Left, Top-Right, Bottom-Left, Bottom-Right
         corners = [
             (cx - offset, cy - offset),
             (cx + offset, cy - offset),
             (cx - offset, cy + offset),
             (cx + offset, cy + offset)
         ]
-
         for corner in corners:
             pygame.draw.circle(surface, rotor_color, corner, rotor_radius)
-            # Optional outline for the rotors
+            # Outline for the rotors
             pygame.draw.circle(
                     surface, get_rgb("grey15"), corner, rotor_radius, 1)
 
@@ -125,11 +119,11 @@ class WindowRenderer:
         return (round(x), round(y))
 
     def draw_static_map(self) -> None:
-        self.screen.fill(get_rgb("gray15"))  # Dark gray background
+        self.screen.fill(get_rgb("gray15"))
 
         # 1. Draw Connections (Edges)
         for conn in self.map_graph.get_conn_list():
-            # We need to look up the actual zones to get their coordinates
+            # look up for the actual zones to get their coordinates
             z1 = self.map_graph.get_zones()[conn.end_point1]
             z2 = self.map_graph.get_zones()[conn.end_point2]
             pygame.draw.line(self.screen, (get_rgb("white")),
@@ -179,7 +173,8 @@ class WindowRenderer:
     def draw_animated_turn(
             self,
             drones: Dict[str, Drone],
-            clock: pygame.time.Clock) -> None:
+            clock: pygame.time.Clock,
+            frames: int = 30) -> None:
 
         def adjust_t(conn: Connection) -> float:
             link_index = parallel_moves[conn]
@@ -191,7 +186,7 @@ class WindowRenderer:
                 1.0, (base_t - delay_factor) / (1.0 - delay_factor)))
             return t
 
-        # 1. Categorize drones ONCE at the start of the turn animation
+        # 1. Categorize drones at the start of the turn
         docked_groups: Dict[str, list[str]] = {}
         moving_drones: Dict[str, Drone] = {}
         in_transit: Dict[str, Drone] = {}
@@ -209,24 +204,18 @@ class WindowRenderer:
             else:
                 moving_drones[d_id] = drone
 
-        # 2. Update positions: Old becomes current, Current becomes new targets
+        # 2. Update positions and keep track of previous one
         self.prev_drones_pos = self.curr_drones_pos.copy()
         self.curr_drones_pos = {d_id: d.current_location for d_id,
                                 d in drones.items() if d.current_location}
 
-        # 3. Animation sub-loop (e.g., 30 frames for the turn transition)
-        frames = 30
+        # 3. Animation sub-loop
         for frame in range(frames + 1):
             # Progress from 0.0 (start of turn) to 1.0 (end of turn)
             base_t = frame / frames
             for c in self.map_graph.get_conn_list():
                 if c.max_link_capacity > 1:
                     parallel_moves[c] = 0
-
-            # Handle window close events during animation
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
 
             # Clear screen and draw static map (zones and connections)
             self.draw_static_map()

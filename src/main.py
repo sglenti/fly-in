@@ -65,6 +65,8 @@ class Application:
 
             # Step-by-step mode waiting loop:
             while paused:
+                window_view.draw_animated_turn(
+                    self.engine.get_drones(), clock, 1)
                 clock.tick(6)
                 for event in pygame.event.get():
                     if event.type == pygame.KEYDOWN:

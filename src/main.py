@@ -123,6 +123,9 @@ class Application:
                     if event.key == pygame.K_ESCAPE or event.key == pygame.K_q:
                         close_app()
 
+        # 6. Print moves log output:
+        console_view.dump_moves()
+
 
 def main(args: List[str] = sys.argv[1:]) -> None:
     interactive = False

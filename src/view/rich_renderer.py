@@ -180,3 +180,7 @@ class ConsoleRenderer:
             )
 
         return table
+
+    def dump_moves(self) -> None:
+        for line in self.log_history:
+            print(line[25:])

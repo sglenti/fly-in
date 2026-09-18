@@ -73,12 +73,17 @@ class Application:
                         if event.key == pygame.K_q:
                             paused = False
                             close_app()
+                    if event.type == pygame.QUIT:
+                        paused = False
+                        close_app()
+            if not self.engine.is_running():
+                break
             # Listen to exit event:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     close_app()
                 elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE or event.key == pygame.K_q:
+                    if event.key == pygame.K_q:
                         close_app()
             if not self.engine.is_running():
                 break
@@ -87,9 +92,7 @@ class Application:
             try:
                 self.engine.process_turn()
             except Exception as e:
-                console_view.end_session()
-                pygame.quit()
-                self.engine.stop()
+                close_app()
                 self.error_console.print(f"[bold red]Error:[/bold red] {e}")
                 sys.exit()
             occupancy_map = self.engine.calculate_all_occupancies()
@@ -105,7 +108,7 @@ class Application:
                     self.engine.get_nb_drones()):
                 self.engine.stop()
             # A little wait between turns
-            time.sleep(1.5)
+            time.sleep(1.0)
 
         # 5. Closing
         while pygame.get_init() and pygame.display.get_surface() is not None:

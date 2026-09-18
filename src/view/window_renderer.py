@@ -168,7 +168,6 @@ class WindowRenderer:
                     midtop=(pos[0], pos[1] + rad + nb * lineheight + 2)
                 )
                 self.screen.blit(text_surf, text_rect)
-        pygame.display.flip()
 
     def draw_animated_turn(
             self,

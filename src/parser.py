@@ -1,3 +1,9 @@
+"""Map parsing utilities for fly-in scenario files.
+
+This module validates map files and converts their textual content into
+structured zone and connection objects used by the simulation engine.
+"""
+
 from src.models import Map, Zone, Connection, ZoneMetadata, Drone
 from src.simulation import SimulationEngine
 from typing import Dict, Any, List
@@ -5,14 +11,57 @@ from pydantic import ValidationError
 import re
 
 
-class Parser():
+class Parser:
+    """Parse a map definition file into the in-memory graph model.
+
+    The parser validates the file format, creates zone and connection objects,
+    and registers drones in the simulation engine.
+
+    Attributes:
+        _map_graph: Graph representation of the map.
+        _engine: Simulation engine being populated by parsed data.
+    """
 
     def __init__(self, map_graph: Map, engine: SimulationEngine) -> None:
+        """Initialize the parser with the target graph and engine.
+
+        Args:
+            map_graph: The map model that will receive parsed zones and
+                connections.
+            engine: Simulation engine that receives drone registrations and
+                turn-state data.
+        """
         self._map_graph = map_graph
         self._engine = engine
 
     def parse_file(self, file_name: str) -> None:
+        """Parse a map file and populate the simulation graph.
+
+        The parser reads the file line by line, validates each definition, and
+        creates the zones, connections, and drone registrations required by the
+        simulation.
+
+        Args:
+            file_name: Path to the map file to parse.
+
+        Raises:
+            SyntaxError: If the file contains malformed syntax.
+            ValueError: If required map data is missing or invalid.
+        """
         def create_zone(data_str: str) -> Zone:
+            """Create a zone object from a single hub declaration.
+
+            Args:
+                data_str: Raw zone definition text, such as
+                    ``'A 10 20 [zone=priority color=red]'``.
+
+            Returns:
+                Parsed zone object with metadata.
+
+            Raises:
+                ValueError: If the zone name is invalid.
+                SyntaxError: If the metadata format is malformed.
+            """
             data_meta = data_str.split(" [", 1)
             values: List[Any] = data_meta[0].split(" ")
             meta = data_meta[1] if len(data_meta) == 2 else None
@@ -59,6 +108,19 @@ class Parser():
                 name=values[0], x=values[1], y=values[2], metadata=metadata)
 
         def create_connection(data: str) -> Connection:
+            """Create a connection object from a connection definition.
+
+            Args:
+                data: Raw connection definition, such as
+                    ``'A-B [max_link_capacity=2]'``.
+
+            Returns:
+                Parsed connection object.
+
+            Raises:
+                ValueError: If the connection endpoints or values are invalid.
+                SyntaxError: If the metadata structure is malformed.
+            """
             values: List[str] = data.split(" [")
             hubs: List[str] = values[0].split("-")
             if len(hubs) != 2 or len(values) > 2 or " " in values[0]:
@@ -165,7 +227,7 @@ class Parser():
                         f"Error in line {n}: '{field}' {error['msg']}")
                 except Exception as e:
                     raise ValueError(
-                            f"Error in line {n}: {e}")
+                        f"Error in line {n}: {e}")
                 self._map_graph.add_connection(conn)
             elif parsed_line[0] == "nb_drones":
                 raise SyntaxError(

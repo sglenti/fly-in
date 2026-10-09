@@ -1,3 +1,9 @@
+"""Application entry point for the fly-in simulation.
+
+This module orchestrates the map parser, simulation engine, and renderers to
+run a full drone-routing scenario.
+"""
+
 import sys
 import os
 from src.models import Map
@@ -13,12 +19,37 @@ from typing import List
 
 
 class Application:
+    """Main controller for the fly-in simulation application.
+
+    The application coordinates parsing, simulation execution, and interactive
+    rendering for the configured map file.
+
+    Attributes:
+        map_file: Path to the map definition file.
+        map_graph: Graph model describing the topology of the map.
+        engine: Simulation engine that advances drone turns.
+        renderer: Console renderer used for text-based output.
+        error_console: Rich console used to print runtime errors.
+        interactive: Whether the simulation should pause between turns.
+        heuristics: Whether the pathfinder should use heuristic guidance.
+    """
+
     def __init__(
             self,
             map_file: str,
             interactive: bool = False,
             heuristics: bool = False
             ) -> None:
+        """Initialize the application and its core components.
+
+        Args:
+            map_file: Path to the scenario file describing the map, hubs, and
+                connections.
+            interactive: When ``True``, simulation advances step by step on user
+                input.
+            heuristics: When ``True``, the pathfinder uses a heuristic to guide
+                route selection.
+        """
         self.map_file = map_file
         self.map_graph = Map()
         self.engine = SimulationEngine(self.map_graph)
@@ -28,7 +59,21 @@ class Application:
         self.heuristics = heuristics
 
     def run(self) -> None:
+        """Execute the simulation end-to-end.
+
+        The method loads the map, validates it, computes drone paths, renders
+        the initial state, and then advances turns until the simulation ends.
+
+        Raises:
+            SystemExit: If the map definition is invalid or the simulation fails
+                during a turn.
+        """
         def close_app() -> None:
+            """Stop the simulation and release graphical resources.
+
+            This nested helper closes the simulation engine, quits pygame, and
+            ends the console rendering session.
+            """
             self.engine.stop()
             pygame.quit()
             console_view.end_session()
@@ -130,6 +175,16 @@ class Application:
 
 
 def main(args: List[str] = sys.argv[1:]) -> None:
+    """Parse command-line arguments and launch the application.
+
+    Args:
+        args: Optional list of command-line arguments. Defaults to the actual
+            process arguments when not provided.
+
+    Raises:
+        SystemExit: If the invocation is invalid or the user passes an incorrect
+            number of arguments.
+    """
     interactive = False
     heuristics = False
     if "--interactive" in args:

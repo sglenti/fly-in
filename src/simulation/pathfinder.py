@@ -1,10 +1,17 @@
+"""Pathfinding utilities for the drone-routing simulation."""
+
 from src.models import Drone, Map, Connection, Zone
 import heapq
 import sys
 from typing import Dict, List, Tuple
 
 
-class PathFinder():
+class PathFinder:
+    """Compute valid paths through the map while respecting capacity rules.
+
+    The pathfinder supports both plain connectivity checks and time-aware route
+    planning that accounts for hub restrictions and link reservations.
+    """
 
     def base_dijkstra(
             self,
@@ -13,38 +20,39 @@ class PathFinder():
             src: str,
             goal: str
             ) -> bool:
+        """Check whether a valid path exists from source to goal.
 
-        # Min-heap (priority queue) storing pairs of (distance, node)
+        Args:
+            zones: Mapping of zone names to zone definitions.
+            adj_list: Adjacency list for the map graph.
+            src: Source zone name.
+            goal: Goal zone name.
+
+        Returns:
+            ``True`` if a path exists, otherwise ``False``.
+        """
         priority_queue: List[Tuple[int, str]] = []
-        # Initialize distances as maxsize
         distances = {k: sys.maxsize for k in adj_list}
 
-        # Distance from source to itself is 0
         distances[src] = 0
         heapq.heappush(priority_queue, (0, src))
 
-        # Process the queue until all reachable vertices are finalized
         while priority_queue:
             current_dist, current_node = heapq.heappop(priority_queue)
 
-            # If this distance not the latest shortest one, skip it
             if current_dist > distances[current_node]:
                 continue
 
-            # We reached goal:
             if current_node == goal:
                 return True
 
-            # Explore all neighbors of the current vertex
             for conn in adj_list[current_node]:
                 neighbor = (conn.end_point2 if conn.end_point2 != current_node
                             else conn.end_point1)
-                # If neighbor is blocked, just skip it
                 if zones[neighbor].metadata.zone_type == "blocked":
                     continue
                 weight = (2 if zones[neighbor].
                           metadata.zone_type == "restricted" else 1)
-                # If we found a shorter path to v through u, update it
                 if distances[current_node] + weight < distances[neighbor]:
                     distances[neighbor] = distances[current_node] + weight
                     heapq.heappush(
@@ -62,22 +70,52 @@ class PathFinder():
             time: int = 0,
             heur: bool = False
             ) -> List[Tuple[str, int]]:
+        """Compute a time-aware route for a drone using reservation-aware Dijkstra.
 
+        Args:
+            map_graph: Current map graph.
+            drone: Drone whose route is being planned.
+            reservations: Zone-time occupancy reservations.
+            link_res: Connection-time reservations.
+            goal: Goal zone name.
+            time: Current simulation time offset.
+            heur: Whether to add a heuristic value to the priority queue.
+
+        Returns:
+            A list of ``(zone_name, turn)`` steps describing the route.
+        """
         def heuristic(node_name: str) -> float:
-            # Euclidean distance to goal
+            """Calculate a simple heuristic distance to the goal.
+
+            Args:
+                node_name: Name of the node to evaluate.
+
+            Returns:
+                Euclidean distance to the goal when heuristics are enabled,
+                otherwise ``0.0``.
+            """
             if not heur:
                 return float(0)
             z = map_graph.get_zones()[node_name]
-            goal = map_graph.get_zones()[map_graph.get_end()]
-            return float(((z.x - goal.x) ** 2 + (z.y - goal.y) ** 2) ** 0.5)
+            goal_zone = map_graph.get_zones()[map_graph.get_end()]
+            return float(((z.x - goal_zone.x) ** 2 + (z.y - goal_zone.y) ** 2) ** 0.5)
 
         def reconstruct_path(
                 parents: Dict[Tuple[str, int], Tuple[str, int]],
                 start: Tuple[str, int],
-                goal: Tuple[str, int]) -> List[Tuple[str, int]]:
-            current = goal
+                goal_state: Tuple[str, int]) -> List[Tuple[str, int]]:
+            """Reconstruct the route from predecessor links.
+
+            Args:
+                parents: Mapping of a state to its predecessor state.
+                start: Starting state.
+                goal_state: Final reachable state.
+
+            Returns:
+                The route from start to goal, expressed as ``(zone, turn)`` pairs.
+            """
+            current = goal_state
             path: List[Tuple[str, int]] = []
-            # If the goal was never reached, return an empty path
             if current not in parent and current != start:
                 return []
 
@@ -94,30 +132,24 @@ class PathFinder():
         adj_list: Dict[str, List[Connection]] = map_graph.get_adj_list()
         src: str = drone.current_location
 
-        # Min-heap storing (est_cost, cost, priority, node, time)
         priority_queue: List[Tuple[float, int, float, str, int]] = []
 
         distances: Dict[Tuple[str, int], int] = {(src, 0): 0}
         parent: Dict[Tuple[str, int], Tuple[str, int]] = {}
 
-        # Distance-time from source to itself is 0
         heapq.heappush(priority_queue, (heuristic(src), 0, 0, src, time))
 
-        # Process the queue until all reachable vertices are finalized
         while priority_queue:
             ec, cost, priority, current_node, current_time = heapq.heappop(
                     priority_queue)
             current_state = (current_node, current_time)
 
-            # If this distance is bigger than latest shortest one, skip it
             if cost > distances[(current_node, current_time)]:
                 continue
 
-            # We reach goal:
             if current_node == goal:
                 break
 
-            # Check if drone can wait here, at this time:
             wait_state = (current_node, current_time + 1)
             if wait_state not in reservations:
                 distances[wait_state] = cost + 1
@@ -134,37 +166,30 @@ class PathFinder():
                             )
                 parent[(current_node, current_time + 1)] = current_state
 
-            # Explore all neighbors of the current vertex
             for conn in adj_list[current_node]:
                 neighbor = (conn.end_point2 if conn.end_point2 != current_node
                             else conn.end_point1)
-                # If neighbor is blocked, just skip it
                 if zones[neighbor].metadata.zone_type == "blocked":
                     continue
                 weight = (2 if zones[neighbor].
                           metadata.zone_type == "restricted" else 1)
                 next_state = (neighbor, current_time + weight)
 
-                # Evaluate if next state if available:
                 current_occupants = reservations.get(next_state, 0)
                 link_users = link_res.get((conn, current_time + 1), 0)
                 zone_capacity = zones[neighbor].metadata.max_drones
                 link_capacity = conn.max_link_capacity
                 if (current_occupants >= zone_capacity or
                         link_users >= link_capacity):
-                    # Too crowded! This state is alreary fully booked
                     continue
-                # if moving into restricted, it will need link for 2 turns:
                 if weight == 2:
                     link_users = link_res.get((conn, current_time + 2), 0)
                 if link_users >= link_capacity:
                     continue
 
-                # If not visited, treat as is:
                 if next_state not in distances:
                     distances[next_state] = sys.maxsize
 
-                # If we found a shorter path to v through u, update it
                 if distances[current_state] + weight < distances[next_state]:
                     distances[next_state] = distances[current_state] + weight
                     parent[next_state] = current_state

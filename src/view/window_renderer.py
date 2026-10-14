@@ -1,3 +1,5 @@
+"""Window-based rendering utilities for the fly-in visual simulator."""
+
 import pygame
 import pygame.gfxdraw
 import math
@@ -6,6 +8,15 @@ from typing import Optional, Dict, Tuple
 
 
 def get_rgb(color_name: Optional[str]) -> tuple[int, int, int]:
+    """Convert a color name or hex code to an RGB tuple.
+
+    Args:
+        color_name: A color name (for example ``'red'``) or a hex code.
+
+    Returns:
+        A three-channel RGB tuple. If the color is invalid, a neutral gray value
+        is returned.
+    """
     if not color_name:
         return (128, 128, 128)
 
@@ -25,7 +36,25 @@ def get_rgb(color_name: Optional[str]) -> tuple[int, int, int]:
 
 
 class WindowRenderer:
+    """Render the simulation as an animated Pygame map.
+
+    The renderer converts logical map coordinates into screen coordinates and
+    animates drones moving along links.
+
+    Attributes:
+        map_graph: Graph describing the simulation topology.
+        scale: Pixel scale used to size the map and nodes.
+        screen: Pygame display surface.
+        font: Font used for zone labels and drone IDs.
+    """
+
     def __init__(self, map_graph: Map, scale: int = 100) -> None:
+        """Initialize the window renderer and its display surface.
+
+        Args:
+            map_graph: Map used to render the scenario.
+            scale: Size of one logical unit in pixels.
+        """
         pygame.init()
         self.map_graph = map_graph
         self.scale = scale
@@ -48,15 +77,38 @@ class WindowRenderer:
         self.prev_drones_pos: Dict[str, str] = {}
 
     def _set_size(self) -> Tuple[float, float]:
+        """Compute the display size from the map bounds.
+
+        Returns:
+            Width and height in pixels for the display surface.
+        """
         return ((self.x_max - self.x_min + 2) * self.scale,
                 (self.y_max - self.y_min + 2) * self.scale)
 
     def _to_pixels(self, x: int, y: int) -> tuple[int, int]:
-        """Convert logical grid coordinates to pixel coordinates."""
+        """Convert logical map coordinates into pixel coordinates.
+
+        Args:
+            x: Logical x coordinate.
+            y: Logical y coordinate.
+
+        Returns:
+            Screen-space coordinate pair.
+        """
         return (x * self.scale + self.x_offset, y * self.scale + self.y_offset)
 
     def _lerp(self, p1: tuple[int, int], p2: tuple[int, int], t: float
               ) -> tuple[int, int]:
+        """Linearly interpolate between two points.
+
+        Args:
+            p1: Starting point.
+            p2: Ending point.
+            t: Interpolation factor between 0 and 1.
+
+        Returns:
+            Interpolated point.
+        """
         x1, y1 = p1
         x2, y2 = p2
         return (round(x1 + (x2 - x1) * t), round(y1 + (y2 - y1) * t))
@@ -66,6 +118,13 @@ class WindowRenderer:
             center: Tuple[int, int],
             drone_id: str,
             size: int = 16) -> None:
+        """Draw a drone icon at a given center point.
+
+        Args:
+            center: Screen-space center point for the drone sprite.
+            drone_id: Identifier shown on the drone icon.
+            size: Size of the drone body in pixels.
+        """
         cx, cy = center
         color = get_rgb("black")
         surface = self.screen
@@ -106,6 +165,17 @@ class WindowRenderer:
             total_drones: int,
             radius: float = 20.0
             ) -> tuple[int, int]:
+        """Compute the offset position for a drone parked around a hub.
+
+        Args:
+            center: Screen-space center of the hub.
+            index: Position index among drones in the same hub.
+            total_drones: Total number of drones sharing the hub.
+            radius: Distance from the hub center.
+
+        Returns:
+            Screen-space position for the drone dock marker.
+        """
         if total_drones <= 1:
             return center
 
@@ -119,6 +189,7 @@ class WindowRenderer:
         return (round(x), round(y))
 
     def draw_static_map(self) -> None:
+        """Draw the static topology: zones, labels, and links."""
         self.screen.fill(get_rgb("gray15"))
 
         # 1. Draw Connections (Edges)
@@ -174,8 +245,22 @@ class WindowRenderer:
             drones: Dict[str, Drone],
             clock: pygame.time.Clock,
             frames: int = 30) -> None:
+        """Animate the movement of drones across one turn.
 
+        Args:
+            drones: Mapping of drone ids to current drone state.
+            clock: Pygame clock controlling the animation timing.
+            frames: Number of frames used to interpolate the movement.
+        """
         def adjust_t(conn: Connection) -> float:
+            """Stagger parallel drone movements to avoid visual overlap.
+
+            Args:
+                conn: Link currently being traversed.
+
+            Returns:
+                Adjusted interpolation factor for a drone on the link.
+            """
             link_index = parallel_moves[conn]
             parallel_moves[conn] += 1
             # 15% delay per drone behind the leader
@@ -298,7 +383,7 @@ class WindowRenderer:
                             self._to_pixels(zone.x, zone.y), d_idx, len(dock))
                         self._draw_abstract_drone(docked_pos, dro)
             pygame.display.flip()
-            clock.tick(60)  # Keep it at 60 FPS for smooth animation
+            clock.tick(60)
 
         # 4: Dock drones after arrival:
         self.draw_static_map()

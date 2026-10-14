@@ -1,10 +1,17 @@
+"""Pathfinding utilities for the drone-routing simulation."""
+
 from src.models import Drone, Map, Connection, Zone
 import heapq
 import sys
 from typing import Dict, List, Tuple
 
 
-class PathFinder():
+class PathFinder:
+    """Compute valid paths through the map while respecting capacity rules.
+
+    The pathfinder supports both plain connectivity checks and time-aware route
+    planning that accounts for hub restrictions and link reservations.
+    """
 
     def base_dijkstra(
             self,
@@ -13,7 +20,17 @@ class PathFinder():
             src: str,
             goal: str
             ) -> bool:
+        """Check whether a valid path exists from source to goal.
 
+        Args:
+            zones: Mapping of zone names to zone definitions.
+            adj_list: Adjacency list for the map graph.
+            src: Source zone name.
+            goal: Goal zone name.
+
+        Returns:
+            ``True`` if a path exists, otherwise ``False``.
+        """
         # Min-heap (priority queue) storing pairs of (distance, node)
         priority_queue: List[Tuple[int, str]] = []
         # Initialize distances as maxsize
@@ -62,9 +79,30 @@ class PathFinder():
             time: int = 0,
             heur: bool = False
             ) -> List[Tuple[str, int]]:
+        """Compute a time-aware route for a drone using reservation-aware Dijkstra.
 
+        Args:
+            map_graph: Current map graph.
+            drone: Drone whose route is being planned.
+            reservations: Zone-time occupancy reservations.
+            link_res: Connection-time reservations.
+            goal: Goal zone name.
+            time: Current simulation time offset.
+            heur: Whether to add a heuristic value to the priority queue.
+
+        Returns:
+            A list of ``(zone_name, turn)`` steps describing the route.
+        """
         def heuristic(node_name: str) -> float:
-            # Euclidean distance to goal
+            """Calculate a simple heuristic distance to the goal.
+
+            Args:
+                node_name: Name of the node to evaluate.
+
+            Returns:
+                Euclidean distance to the goal when heuristics are enabled,
+                otherwise ``0.0``.
+            """
             if not heur:
                 return float(0)
             z = map_graph.get_zones()[node_name]
@@ -75,6 +113,16 @@ class PathFinder():
                 parents: Dict[Tuple[str, int], Tuple[str, int]],
                 start: Tuple[str, int],
                 goal: Tuple[str, int]) -> List[Tuple[str, int]]:
+            """Reconstruct the route from predecessor links.
+
+            Args:
+                parents: Mapping of a state to its predecessor state.
+                start: Starting state.
+                goal_state: Final reachable state.
+
+            Returns:
+                The route from start to goal, expressed as ``(zone, turn)`` pairs.
+            """
             current = goal
             path: List[Tuple[str, int]] = []
             # If the goal was never reached, return an empty path

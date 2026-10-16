@@ -53,7 +53,7 @@ class Parser:
 
             Args:
                 data_str: Raw zone definition text, such as
-                    ``'A 10 20 [zone=priority color=red]'``.
+                    'A 10 20 [zone=priority color=red]'.
 
             Returns:
                 Parsed zone object with metadata.
@@ -112,7 +112,7 @@ class Parser:
 
             Args:
                 data: Raw connection definition, such as
-                    ``'A-B [max_link_capacity=2]'``.
+                    'A-B [max_link_capacity=2]'.
 
             Returns:
                 Parsed connection object.

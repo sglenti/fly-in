@@ -11,10 +11,10 @@ def get_rgb(color_name: Optional[str]) -> tuple[int, int, int]:
     """Convert a color name or hex code to an RGB tuple.
 
     Args:
-        color_name: A color name (for example ``'red'``) or a hex code.
+        color_name: A color name (for example 'red') or a hex code.
 
     Returns:
-        A three-channel RGB tuple. If the color is invalid, a neutral gray value
+        A three-channel RGB tuple. If the color is invalid, a neutral gray
         is returned.
     """
     if not color_name:

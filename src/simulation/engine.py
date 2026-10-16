@@ -8,7 +8,7 @@ from .pathfinder import PathFinder
 class SimulationEngine:
     """Advance the simulation and enforce movement constraints.
 
-    The engine validates each turn, updates drone positions, and tracks
+    The engine validates each turn moves, updates drone positions, and tracks
     reservations in zones and links to prevent invalid congestion.
 
     Attributes:
@@ -91,7 +91,7 @@ class SimulationEngine:
         """Return the current link reservation map.
 
         Returns:
-            Mapping of ``(connection, time_step)`` to reservation counts.
+            Mapping of '(connection, time_step)' to reservation counts.
         """
         return self._link_res
 
@@ -160,7 +160,7 @@ class SimulationEngine:
         """Return whether the simulation is active.
 
         Returns:
-            ``True`` while the engine is running, otherwise ``False``.
+            'True' while the engine is running, otherwise 'False'.
         """
         return self._running
 
@@ -168,7 +168,7 @@ class SimulationEngine:
         """Validate that all planned moves obey zone and link capacity rules.
 
         Raises:
-            RuntimeError: If a drone attempts to violate a hub or link capacity.
+            RuntimeError: If a move violates a hub or link capacity.
         """
         intents_zone: Dict[Tuple[str, int], List[str]] = {}
         intents_conn: Dict[Tuple[Connection, int], List[str]] = {}
@@ -275,8 +275,8 @@ class SimulationEngine:
                 else:
                     # Houston, we have a problem:
                     raise ValueError(
-                        f"Drone '{d.id}' with path node in the past!"
-                        f"{d.path}")
+                        f"Drone '{d.id}' with path node has invalid time!"
+                        f"Turn: {self._turn} Path: {d.path}")
             else:
                 d.status = DroneStatus.DELIVERED
 

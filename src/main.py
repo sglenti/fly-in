@@ -45,9 +45,9 @@ class Application:
         Args:
             map_file: Path to the scenario file describing the map, hubs, and
                 connections.
-            interactive: When ``True``, simulation advances step by step on user
+            interactive: When 'True', simulation advances step by step on user
                 input.
-            heuristics: When ``True``, the pathfinder uses a heuristic to guide
+            heuristics: When 'True', the pathfinder uses a heuristic to guide
                 route selection.
         """
         self.map_file = map_file
@@ -65,7 +65,7 @@ class Application:
         the initial state, and then advances turns until the simulation ends.
 
         Raises:
-            SystemExit: If the map definition is invalid or the simulation fails
+            SystemExit: If the map definition is invalid or the simulation fail
                 during a turn.
         """
         def close_app() -> None:
@@ -182,7 +182,7 @@ def main(args: List[str] = sys.argv[1:]) -> None:
             process arguments when not provided.
 
     Raises:
-        SystemExit: If the invocation is invalid or the user passes an incorrect
+        SystemExit: If the invocation is invalid or the user passes an wrong
             number of arguments.
     """
     interactive = False

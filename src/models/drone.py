@@ -23,9 +23,9 @@ class Drone(BaseModel):
 
     Attributes:
         id: Unique identifier for the drone.
-        current_location: Current zone name, or ``None`` while traversing a link.
+        current_location: Current zone name, or 'None' while traversing a link.
         status: Current operational status.
-        path: Planned route as a sequence of ``(zone_name, turn)`` pairs.
+        path: Planned route as a sequence of '(zone_name, turn)' pairs.
     """
 
     id: str

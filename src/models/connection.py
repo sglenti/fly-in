@@ -4,12 +4,12 @@ from pydantic import BaseModel, Field
 
 
 class Connection(BaseModel):
-    """Represents a directed or undirected link between two zones.
+    """Represents an undirected link between two zones.
 
     Attributes:
         end_point1: First endpoint of the connection.
         end_point2: Second endpoint of the connection.
-        max_link_capacity: Maximum number of drones allowed on the link at once.
+        max_link_capacity: Max number of drones allowed on the link at once.
     """
 
     end_point1: str

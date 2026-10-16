@@ -109,7 +109,7 @@ class Map:
             zone: Name of the zone to inspect.
 
         Returns:
-            ``True`` when the zone is marked restricted, otherwise ``False``.
+            'True' when the zone is marked restricted, otherwise 'False'.
         """
         return bool(
                 self._zones[zone].metadata.zone_type == ZoneType.RESTRICTED)
@@ -126,7 +126,7 @@ class Map:
             node2: Name of the second zone.
 
         Returns:
-            The matching connection object or ``None`` if no direct connection is
+            The matching connection object or 'None' if no direct connection is
             found.
         """
         if node1 and node2 and node1 != node2:
@@ -223,3 +223,12 @@ class Map:
             Start zone name.
         """
         return self.get_start()
+
+    @property
+    def end_zone_name(self) -> str:
+        """Return the configured end zone name.
+
+        Returns:
+            End zone name.
+        """
+        return self.get_end()

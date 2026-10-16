@@ -1,7 +1,7 @@
 """Command-line entry point for the fly-in project.
 
-This module imports the application entry point and presents a friendly
-startup error message if the runtime environment is missing dependencies.
+This module imports the application entry point and shows a
+startup error message on missing dependencies.
 """
 
 import sys

@@ -9,7 +9,7 @@ from typing import Dict, List, Tuple
 class PathFinder:
     """Compute valid paths through the map while respecting capacity rules.
 
-    The pathfinder supports both plain connectivity checks and time-aware route
+    The pathfinder performs plain connectivity checks and time-aware route
     planning that accounts for hub restrictions and link reservations.
     """
 
@@ -29,7 +29,7 @@ class PathFinder:
             goal: Goal zone name.
 
         Returns:
-            ``True`` if a path exists, otherwise ``False``.
+            'True' if a path exists, otherwise 'False'.
         """
         # Min-heap (priority queue) storing pairs of (distance, node)
         priority_queue: List[Tuple[int, str]] = []
@@ -79,7 +79,7 @@ class PathFinder:
             time: int = 0,
             heur: bool = False
             ) -> List[Tuple[str, int]]:
-        """Compute a time-aware route for a drone using reservation-aware Dijkstra.
+        """Compute a time-aware route using reservation-aware Dijkstra.
 
         Args:
             map_graph: Current map graph.
@@ -91,7 +91,7 @@ class PathFinder:
             heur: Whether to add a heuristic value to the priority queue.
 
         Returns:
-            A list of ``(zone_name, turn)`` steps describing the route.
+            A list of '(zone_name, turn)' steps describing the route.
         """
         def heuristic(node_name: str) -> float:
             """Calculate a simple heuristic distance to the goal.
@@ -101,7 +101,7 @@ class PathFinder:
 
             Returns:
                 Euclidean distance to the goal when heuristics are enabled,
-                otherwise ``0.0``.
+                otherwise '0.0'.
             """
             if not heur:
                 return float(0)
@@ -121,7 +121,7 @@ class PathFinder:
                 goal_state: Final reachable state.
 
             Returns:
-                The route from start to goal, expressed as ``(zone, turn)`` pairs.
+                The route from start to goal expressed as '(zone, turn)' pairs.
             """
             current = goal
             path: List[Tuple[str, int]] = []
@@ -151,7 +151,7 @@ class PathFinder:
         # Distance-time from source to itself is 0
         heapq.heappush(priority_queue, (heuristic(src), 0, 0, src, time))
 
-        # Process the queue until all reachable vertices are finalized
+        # Process the queue until goal is reached or all vertices are finalized
         while priority_queue:
             ec, cost, priority, current_node, current_time = heapq.heappop(
                     priority_queue)
@@ -161,7 +161,7 @@ class PathFinder:
             if cost > distances[(current_node, current_time)]:
                 continue
 
-            # We reach goal:
+            # We reached goal:
             if current_node == goal:
                 break
 

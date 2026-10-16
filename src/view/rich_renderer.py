@@ -1,11 +1,10 @@
-"""Renderers for terminal and graphical output in the simulation."""
+"""Renderer for terminal output in the simulation."""
 
-from rich.console import Console 
+from rich.console import Console
 from rich.layout import Layout
 from rich.table import Table
 from rich.live import Live
 from rich.panel import Panel
-from rich.text import Text
 from rich.align import Align
 from rich import box
 from src.models import Map, Drone
@@ -15,8 +14,8 @@ from typing import Dict, List
 class ConsoleRenderer:
     """Render the simulation state in the terminal using rich widgets.
 
-    The renderer exposes a live layout for the current map state and a log panel
-    for per-turn move summaries.
+    The renderer exposes a live layout for the current map state and a log
+    panel for per-turn move summaries.
 
     Attributes:
         _console: Rich console used for printing to the terminal.
@@ -83,7 +82,6 @@ class ConsoleRenderer:
             self.log_history[-50:-1] + [f"[bold]{move_log_string}[/bold]"]))
 
         aligned_logs = Align(recent_logs, align="left", vertical="top")
-        # Update log panel content:
         self._layout["lower"].update(
                 Panel(aligned_logs, title="Turn Log", border_style="blue",
                       )
@@ -98,7 +96,6 @@ class ConsoleRenderer:
             drones: Mapping of drone ids to drone objects.
         """
         table = self.render_map_info(turn, drones)
-        # Update what the Live display is showing
         if self._live:
             self._layout["upper"].update(table)
             self._live.refresh()
@@ -170,7 +167,6 @@ class ConsoleRenderer:
 
         # Fill table rows:
         for node in displayed_zones:
-            # for node in displayed_zones:
             neighbor_strings = []
             neighbors = {
                 (c.end_point2 if c.end_point1 == node.name else c.end_point1):
@@ -251,12 +247,16 @@ class ConsoleRenderer:
             total_cost += len(line.split())
         avg_moves = (sum(moves_per_drone.values()) / len(moves_per_drone))
         avg_turns = (sum(drone_delivery.values()) / len(moves_per_drone))
-        peak = max(len(l.split()) for l in self.moves_history)
+        peak = max(len(ln.split()) for ln in self.moves_history)
         stats: str = (
-            f"[bold cyan]Avg moves p/ drone:[/bold cyan] [green]{avg_moves:.2f}[/green]\n"
-            f"[bold cyan]Avg turns p/ drone:[/bold cyan] [green]{avg_turns:.2f}[/green]\n"
-            f"[bold cyan]Peak concurrency:[/bold cyan]   [yellow]{peak}[/yellow]\n"
-            f"[bold cyan]Total cost:[/bold cyan]         [magenta]{total_cost}[/magenta]\n"
+            f"[bold cyan]Avg moves p/ drone:[/bold cyan] "
+            f"[green]{avg_moves:.2f}[/green]\n"
+            f"[bold cyan]Avg turns p/ drone:[/bold cyan] "
+            f"[green]{avg_turns:.2f}[/green]\n"
+            f"[bold cyan]Peak concurrency:[/bold cyan]   "
+            f"[yellow]{peak}[/yellow]\n"
+            f"[bold cyan]Total cost:[/bold cyan]         "
+            f"[magenta]{total_cost}[/magenta]\n"
         )
         aligned_stats = Align(stats, align="left", vertical="top")
         self._layout["lower"].update(

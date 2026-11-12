@@ -1,0 +1,47 @@
+nb_drones: 1
+
+start_hub: start 0 10 [color=green]
+end_hub: goal 20 10 [color=yellow]
+
+# A massive vertical wall of obstacles right in the middle blocking the direct line
+hub: wall1 10 2 [zone=blocked]
+hub: wall2 10 4 [zone=blocked]
+hub: wall3 10 6 [zone=blocked]
+hub: wall4 10 8 [zone=blocked]
+hub: wall5 10 10 [zone=blocked]
+hub: wall6 10 12 [zone=blocked]
+hub: wall7 10 14 [zone=blocked]
+hub: wall8 10 16 [zone=blocked]
+hub: wall9 10 18 [zone=blocked]
+
+# The Northern detour route (longer, but open)
+hub: n_detour1 5 18
+hub: n_detour2 10 19
+hub: n_detour3 15 18
+
+# The Southern detour route (shorter perimeter route)
+hub: s_detour1 5 2
+hub: s_detour2 10 1
+hub: s_detour3 15 2
+
+# Direct approach nodes leading up to the wall
+hub: approach_n 9 10
+hub: approach_s 11 10
+
+# Connections for the Southern Detour (Shorter)
+connection: start-s_detour1
+connection: s_detour1-s_detour2
+connection: s_detour2-s_detour3
+connection: s_detour3-goal
+
+# Connections for the Northern Detour (Longer)
+connection: start-n_detour1
+connection: n_detour1-n_detour2
+connection: n_detour2-n_detour3
+connection: n_detour3-goal
+
+# Dead ends / traps around the wall to trick pure Dijkstra
+connection: start-approach_n
+connection: approach_n-wall5
+connection: goal-approach_s
+connection: approach_s-wall5

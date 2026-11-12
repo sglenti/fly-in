@@ -1,0 +1,31 @@
+# --- BROKEN PARSER TEST MAP ---
+# This map violates almost every single parsing and validation rule.
+
+# Error 1: Missing or invalid nb_drones (e.g., negative or non-integer)
+nb_drones: 1
+
+# Error 2: Duplicate zone names or invalid characters (dashes are forbidden in names)
+start_hub: starthub 0 0 [color=green]
+end_hub: goal 10 10 [color=yellow]
+
+# Error 3: Invalid coordinates (non-integer)
+hub: zoneA abc 5 [zone=normal]
+
+# Error 4: Invalid zone type in metadata
+hub: zoneB 2 2 [zone=super_speed color=blue]
+
+# Error 5: Invalid capacity (negative or zero)
+hub: zoneC 4 4 [zone=priority max_drones=-2]
+
+# Error 6: Malformed metadata syntax (missing brackets or bad formatting)
+hub: zoneD 6 6 zone=restricted
+
+# Error 7: Connection linking to a non-existent zone
+connection: start-hub-zoneX [max_link_capacity=1]
+
+# Error 8: Duplicate connection (e.g. a-b and b-a)
+connection: zoneA-zoneB
+connection: zoneB-zoneA [max_link_capacity=2]
+
+# Error 9: Invalid connection capacity
+connection: zoneC-zoneD [max_link_capacity=0]

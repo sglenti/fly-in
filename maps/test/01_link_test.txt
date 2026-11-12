@@ -1,0 +1,8 @@
+nb_drones: 12
+start_hub: start 0 0 [color=green max_drones=2]
+hub: tunnel 2 0 [zone=restricted color=blue max_drones=2] 
+end_hub: goal 3 0 [color=yellow max_drones=2] 
+
+# The bottleneck wire only allows 1 drone at a time
+connection: start-tunnel [max_link_capacity=2]
+connection: tunnel-goal [max_link_capacity=2]

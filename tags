@@ -1,0 +1,110 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_OUTPUT_EXCMD	mixed	/number, pattern, mixed, or combineV2/
+!_TAG_OUTPUT_FILESEP	slash	/slash or backslash/
+!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
+!_TAG_PATTERN_LENGTH_LIMIT	96	/0 for no limit/
+!_TAG_PROC_CWD	/home/barbol/Projects/42/local/fly-in/git/	//
+!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
+!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
+!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
+!_TAG_PROGRAM_VERSION	5.9.0	//
+Application	src/main.py	/^class Application:$/;"	c
+BLOCKED	src/models/zone.py	/^    BLOCKED = "blocked"$/;"	v	class:ZoneType
+Connection	src/models/connection.py	/^class Connection(BaseModel):$/;"	c
+ConsoleRenderer	src/view/rich_renderer.py	/^class ConsoleRenderer:$/;"	c
+DELIVERED	src/models/drone.py	/^    DELIVERED = "delivered"$/;"	v	class:DroneStatus
+Drone	src/models/drone.py	/^class Drone(BaseModel):$/;"	c
+DroneStatus	src/models/drone.py	/^class DroneStatus(str, Enum):$/;"	c
+IN_TRANSIT	src/models/drone.py	/^    IN_TRANSIT = "in_transit"  # For 2-turn movements$/;"	v	class:DroneStatus
+MOVING	src/models/drone.py	/^    MOVING = "moving"$/;"	v	class:DroneStatus
+Map	src/models/map.py	/^class Map:$/;"	c
+NORMAL	src/models/zone.py	/^    NORMAL = "normal"$/;"	v	class:ZoneType
+PRIORITY	src/models/zone.py	/^    PRIORITY = "priority"$/;"	v	class:ZoneType
+Parser	src/parser.py	/^class Parser:$/;"	c
+PathFinder	src/simulation/pathfinder.py	/^class PathFinder:$/;"	c
+RESTRICTED	src/models/zone.py	/^    RESTRICTED = "restricted"$/;"	v	class:ZoneType
+SimulationEngine	src/simulation/engine.py	/^class SimulationEngine:$/;"	c
+WAITING	src/models/drone.py	/^    WAITING = "waiting"$/;"	v	class:DroneStatus
+WindowRenderer	src/view/window_renderer.py	/^class WindowRenderer:$/;"	c
+Zone	src/models/zone.py	/^class Zone(BaseModel):$/;"	c
+ZoneMetadata	src/models/zone.py	/^class ZoneMetadata(BaseModel):$/;"	c
+ZoneType	src/models/zone.py	/^class ZoneType(str, Enum):$/;"	c
+__all__	src/models/__init__.py	/^__all__ = [$/;"	v
+__all__	src/simulation/__init__.py	/^__all__ = ["SimulationEngine"]$/;"	v
+__all__	src/view/__init__.py	/^__all__ = ["ConsoleRenderer", "WindowRenderer"]$/;"	v
+__init__	src/main.py	/^    def __init__($/;"	m	class:Application	typeref:typename:None
+__init__	src/models/map.py	/^    def __init__(self) -> None:$/;"	m	class:Map	typeref:typename:None
+__init__	src/parser.py	/^    def __init__(self, map_graph: Map, engine: SimulationEngine) -> None:$/;"	m	class:Parser	typeref:typename:None
+__init__	src/simulation/engine.py	/^    def __init__(self, sim_map: Map) -> None:$/;"	m	class:SimulationEngine	typeref:typename:None
+__init__	src/view/rich_renderer.py	/^    def __init__(self, map_graph: Map) -> None:$/;"	m	class:ConsoleRenderer	typeref:typename:None
+__init__	src/view/window_renderer.py	/^    def __init__(self, map_graph: Map, scale: int = 100) -> None:$/;"	m	class:WindowRenderer	typeref:typename:None
+_draw_abstract_drone	src/view/window_renderer.py	/^    def _draw_abstract_drone($/;"	m	class:WindowRenderer	typeref:typename:None
+_get_dock_position	src/view/window_renderer.py	/^    def _get_dock_position($/;"	m	class:WindowRenderer	typeref:typename:tuple[int,int]
+_lerp	src/view/window_renderer.py	/^    def _lerp(self, p1: tuple[int, int], p2: tuple[int, int], t: float$/;"	m	class:WindowRenderer	typeref:typename:tuple[int,int]
+_set_size	src/view/window_renderer.py	/^    def _set_size(self) -> Tuple[float, float]:$/;"	m	class:WindowRenderer	typeref:typename:Tuple[float,float]
+_to_pixels	src/view/window_renderer.py	/^    def _to_pixels(self, x: int, y: int) -> tuple[int, int]:$/;"	m	class:WindowRenderer	typeref:typename:tuple[int,int]
+_validate_moves	src/simulation/engine.py	/^    def _validate_moves(self) -> None:$/;"	m	class:SimulationEngine	typeref:typename:None
+add_connection	src/models/map.py	/^    def add_connection(self, connection: Connection) -> None:$/;"	m	class:Map	typeref:typename:None
+add_zone	src/models/map.py	/^    def add_zone(self, zone: Zone) -> None:$/;"	m	class:Map	typeref:typename:None
+adjust_t	src/view/window_renderer.py	/^        def adjust_t(conn: Connection) -> float:$/;"	f	member:WindowRenderer.draw_animated_turn	typeref:typename:float	file:
+base_dijkstra	src/simulation/pathfinder.py	/^    def base_dijkstra($/;"	m	class:PathFinder	typeref:typename:bool
+calculate_all_occupancies	src/simulation/engine.py	/^    def calculate_all_occupancies(self) -> Dict[str, int]:$/;"	m	class:SimulationEngine	typeref:typename:Dict[str,int]
+calculate_paths	src/simulation/engine.py	/^    def calculate_paths(self, heuristics: bool) -> None:$/;"	m	class:SimulationEngine	typeref:typename:None
+check_connectivity	src/simulation/engine.py	/^    def check_connectivity(self) -> None:$/;"	m	class:SimulationEngine	typeref:typename:None
+close_app	src/main.py	/^        def close_app() -> None:$/;"	f	member:Application.run	typeref:typename:None	file:
+color	src/models/zone.py	/^    color: Optional[str] = None$/;"	v	class:ZoneMetadata	typeref:typename:Optional[str]
+create_connection	src/parser.py	/^        def create_connection(data: str) -> Connection:$/;"	f	member:Parser.parse_file	typeref:typename:Connection	file:
+create_zone	src/parser.py	/^        def create_zone(data_str: str) -> Zone:$/;"	f	member:Parser.parse_file	typeref:typename:Zone	file:
+draw_animated_turn	src/view/window_renderer.py	/^    def draw_animated_turn($/;"	m	class:WindowRenderer	typeref:typename:None
+draw_static_map	src/view/window_renderer.py	/^    def draw_static_map(self) -> None:$/;"	m	class:WindowRenderer	typeref:typename:None
+dump_moves	src/view/rich_renderer.py	/^    def dump_moves(self) -> None:$/;"	m	class:ConsoleRenderer	typeref:typename:None
+end_session	src/view/rich_renderer.py	/^    def end_session(self) -> None:$/;"	m	class:ConsoleRenderer	typeref:typename:None
+end_zone_name	src/models/map.py	/^    def end_zone_name(self) -> str:$/;"	m	class:Map	typeref:typename:str
+get_adj_list	src/models/map.py	/^    def get_adj_list(self) -> Dict[str, List[Connection]]:$/;"	m	class:Map	typeref:typename:Dict[str,List[Connection]]
+get_conn_list	src/models/map.py	/^    def get_conn_list(self) -> List[Connection]:$/;"	m	class:Map	typeref:typename:List[Connection]
+get_connection	src/models/map.py	/^    def get_connection($/;"	m	class:Map	typeref:typename:Optional[Connection]
+get_drones	src/simulation/engine.py	/^    def get_drones(self) -> Dict[str, Drone]:$/;"	m	class:SimulationEngine	typeref:typename:Dict[str,Drone]
+get_end	src/models/map.py	/^    def get_end(self) -> str:$/;"	m	class:Map	typeref:typename:str
+get_link_res	src/simulation/engine.py	/^    def get_link_res(self) -> Dict[Tuple[Connection, int], int]:$/;"	m	class:SimulationEngine	typeref:typename:Dict[Tuple[Connection,int],int]
+get_nb_drones	src/simulation/engine.py	/^    def get_nb_drones(self) -> int:$/;"	m	class:SimulationEngine	typeref:typename:int
+get_rgb	src/view/window_renderer.py	/^def get_rgb(color_name: Optional[str]) -> tuple[int, int, int]:$/;"	f	typeref:typename:tuple[int,int,int]
+get_start	src/models/map.py	/^    def get_start(self) -> str:$/;"	m	class:Map	typeref:typename:str
+get_turn	src/simulation/engine.py	/^    def get_turn(self) -> int:$/;"	m	class:SimulationEngine	typeref:typename:int
+get_turn_moves	src/simulation/engine.py	/^    def get_turn_moves(self) -> List[str]:$/;"	m	class:SimulationEngine	typeref:typename:List[str]
+get_zones	src/models/map.py	/^    def get_zones(self) -> Dict[str, Zone]:$/;"	m	class:Map	typeref:typename:Dict[str,Zone]
+heuristic	src/simulation/pathfinder.py	/^        def heuristic(node_name: str) -> float:$/;"	f	member:PathFinder.time_dijkstra	typeref:typename:float	file:
+initialize_graph	src/models/map.py	/^    def initialize_graph(self) -> None:$/;"	m	class:Map	typeref:typename:None
+is_restricted	src/models/map.py	/^    def is_restricted(self, zone: str) -> bool:$/;"	m	class:Map	typeref:typename:bool
+is_running	src/simulation/engine.py	/^    def is_running(self) -> bool:$/;"	m	class:SimulationEngine	typeref:typename:bool
+main	src/__main__.py	/^def main() -> None:$/;"	f	typeref:typename:None
+main	src/main.py	/^def main(args: List[str] = sys.argv[1:]) -> None:$/;"	f	typeref:typename:None
+max_drones	src/models/zone.py	/^    max_drones: int = Field(default=1, gt=0)$/;"	v	class:ZoneMetadata	typeref:typename:int
+max_link_capacity	src/models/connection.py	/^    max_link_capacity: int = Field(default=1, gt=0)$/;"	v	class:Connection	typeref:typename:int
+metadata	src/models/zone.py	/^    metadata: ZoneMetadata = Field(default_factory=ZoneMetadata)$/;"	v	class:Zone	typeref:typename:ZoneMetadata
+model_config	src/models/connection.py	/^    model_config = {$/;"	v	class:Connection
+model_config	src/models/zone.py	/^    model_config = {$/;"	v	class:ZoneMetadata
+name_must_not_have_dashes	src/models/zone.py	/^    def name_must_not_have_dashes(cls, v: str) -> str:$/;"	m	class:Zone	typeref:typename:str
+parse_file	src/parser.py	/^    def parse_file(self, file_name: str) -> None:$/;"	m	class:Parser	typeref:typename:None
+path	src/models/drone.py	/^    path: List[Tuple[str, int]] = Field(default_factory=list)$/;"	v	class:Drone	typeref:typename:List[Tuple[str, int]]
+print_line	src/view/rich_renderer.py	/^    def print_line(self, turn: int, moves: List[str]) -> None:$/;"	m	class:ConsoleRenderer	typeref:typename:None
+print_stats	src/view/rich_renderer.py	/^    def print_stats(self) -> None:$/;"	m	class:ConsoleRenderer	typeref:typename:None
+print_topology	src/models/map.py	/^    def print_topology(self) -> None:$/;"	m	class:Map	typeref:typename:None
+process_turn	src/simulation/engine.py	/^    def process_turn(self) -> None:$/;"	m	class:SimulationEngine	typeref:typename:None
+reconstruct_path	src/simulation/pathfinder.py	/^        def reconstruct_path($/;"	f	member:PathFinder.time_dijkstra	typeref:typename:List[Tuple[str,int]]	file:
+register_drone	src/simulation/engine.py	/^    def register_drone(self, drone: Drone) -> None:$/;"	m	class:SimulationEngine	typeref:typename:None
+render_map_info	src/view/rich_renderer.py	/^    def render_map_info(self, turn: int, drones: Dict[str, Drone]) -> Table:$/;"	m	class:ConsoleRenderer	typeref:typename:Table
+render_turn	src/view/rich_renderer.py	/^    def render_turn(self, turn: int, drones: Dict[str, Drone]) -> None:$/;"	m	class:ConsoleRenderer	typeref:typename:None
+run	src/__main__.py	/^        from src.main import main as run$/;"	x	function:main	file:	nameref:unknown:main
+run	src/main.py	/^    def run(self) -> None:$/;"	m	class:Application	typeref:typename:None
+set_end_zone	src/models/map.py	/^    def set_end_zone(self, zone: Zone) -> None:$/;"	m	class:Map	typeref:typename:None
+set_nb_drones	src/simulation/engine.py	/^    def set_nb_drones(self, nb_drones: int) -> None:$/;"	m	class:SimulationEngine	typeref:typename:None
+set_start_zone	src/models/map.py	/^    def set_start_zone(self, zone: Zone) -> None:$/;"	m	class:Map	typeref:typename:None
+start	src/simulation/engine.py	/^    def start(self) -> None:$/;"	m	class:SimulationEngine	typeref:typename:None
+start_session	src/view/rich_renderer.py	/^    def start_session(self) -> None:$/;"	m	class:ConsoleRenderer	typeref:typename:None
+start_zone_name	src/models/map.py	/^    def start_zone_name(self) -> str:$/;"	m	class:Map	typeref:typename:str
+status	src/models/drone.py	/^    status: DroneStatus = DroneStatus.WAITING$/;"	v	class:Drone	typeref:typename:DroneStatus
+stop	src/simulation/engine.py	/^    def stop(self) -> None:$/;"	m	class:SimulationEngine	typeref:typename:None
+time_dijkstra	src/simulation/pathfinder.py	/^    def time_dijkstra($/;"	m	class:PathFinder	typeref:typename:List[Tuple[str,int]]
+to_json	src/models/map.py	/^    def to_json(self) -> str:$/;"	m	class:Map	typeref:typename:str
+zone_type	src/models/zone.py	/^    zone_type: ZoneType = ZoneType.NORMAL$/;"	v	class:ZoneMetadata	typeref:typename:ZoneType

@@ -295,6 +295,9 @@ class WindowRenderer:
 
         # 3. Animation sub-loop
         for frame in range(frames + 1):
+            if frames == 1:
+                break
+
             # Progress from 0.0 (start of turn) to 1.0 (end of turn)
             base_t = frame / frames
             for c in self.map_graph.get_conn_list():

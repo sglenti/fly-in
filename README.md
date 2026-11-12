@@ -44,13 +44,27 @@ Instead of handling collisions dynamically at runtime, the pathfinder evaluates 
 - **Pygame Visualizer:** Renders the map topology and translates discrete turn states into smooth 60 FPS animations using Linear Interpolation (Lerp), abstract procedural drones, and docked positions for multiple drones in the same hub.
 - **Rich TUI Dashboard:** A top-anchored layout featuring a real-time telemetry table with dynamic column sizing, terminal-width responsiveness, and a scrolling per-turn movements log. Additionally presenting some final figures summarizing the simulation execution before exiting. 
 
-#### Complexity:
+### 4. Design trade-offs
 - Worst-case state-space search can blow up if time horizon is large (search over `(node, time)` states).
 - Heuristic (when enabled) helps prune search and reduce exploration.
 - The implementation caches reservations per planning round but does not persist full path caches across major topology changes (the code lays a foundation for caching and incremental updates).
-
-#### Design trade-offs:
 - This design favors correctness and constraint enforcement; for very large numbers of drones or long horizons, further optimizations (incremental replanning, hierarchical routing, or prioritized planning) can help scale.
+
+## Visual Representation and User Experience
+
+Fly-in provides two complementary views of the simulation: a live terminal dashboard powered by Rich and an animated map powered by Pygame.
+Terminal dashboard
+
+### 1. Terminal Dashboard
+The dashboard updates as the simulation advances. It shows the current turn, zone types, neighboring zones and link capacities, and the drones at or in transit toward each zone. Its per-turn movement log makes it easy to see what changed, while the final metrics summarize the completed run.
+
+This view is useful for quickly checking simulation state and capacity constraints, and for reading a concise record of the drones’ movements.
+Animated map
+
+### 2. Animated Map Window
+The Pygame view displays zones at their map coordinates, connected by links. Zone colors and labels help distinguish locations, and each drone is drawn with its identifier. Drones move smoothly between zones; drones sharing a zone are drawn at separate positions so they remain visible. A drone traveling through a restricted-zone connection is shown partway along the link while it is in transit.
+
+This view makes the graph layout and the drones’ routes easier to understand at a glance. It can help users spot bottlenecks, follow individual drones, and see how the simulation’s turn-by-turn plan plays out spatially.
 
 ## Instructions & Installation
 
@@ -188,7 +202,8 @@ Drones that do not move on a given turn are omitted on that line. The simulation
 ends when all drones have reached the end hub. 
 
 ## Resources
- - 
+ - Dijkstra's Algorithm: https://www.geeksforgeeks.org/dsa/dijkstras-shortest-path-algorithm-greedy-algo-7/
+ - Representation of Graph: https://www.geeksforgeeks.org/dsa/graph-and-its-representations/
  - Pygame Documentation: https://www.pygame.org/docs/
  - Rich Documentation: https://rich.readthedocs.io/en/stable/index.html
  - Pydantic: https://pydantic.dev/docs/validation/latest/get-started/
@@ -197,9 +212,9 @@ ends when all drones have reached the end hub.
 
 During the development of this project, AI tools were utilized for:
 
-    Architectural Brainstorming: Discussing trade-offs between distributed vs. centralized graph registries and designing the 3D space-time state machine.
-    Debugging Assistance: Resolving subtle Pydantic V2 configuration conflicts and optimizing heap queue tie-breakers.
-    TUI Layout Structuring: Designing the top-anchored layout structure and auto-scrolling log streams using rich.
-    Documentation drafting: propose and generate PEP-257 docstrings and simple README base.
+Architectural Brainstorming: Discussing trade-offs between distributed vs. centralized graph registries and designing the 3D space-time state machine.
+Debugging Assistance: Resolving subtle Pydantic V2 configuration conflicts and optimizing heap queue tie-breakers.
+TUI Layout Structuring: Designing the top-anchored layout structure and auto-scrolling log streams using rich.
+Documentation drafting: propose and generate PEP-257 docstrings and simple README base.
 
 All AI-generated snippets, algorithms, and architectural patterns were reviewed, understood, refactored, and integrated manually.

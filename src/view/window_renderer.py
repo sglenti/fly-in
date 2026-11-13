@@ -295,8 +295,6 @@ class WindowRenderer:
 
         # 3. Animation sub-loop
         for frame in range(frames + 1):
-            if frames == 1:
-                break
 
             # Progress from 0.0 (start of turn) to 1.0 (end of turn)
             base_t = frame / frames
@@ -377,6 +375,8 @@ class WindowRenderer:
                     self._draw_abstract_drone(current_pixel_pos, drone.id)
 
             # 6. Draw docked (waiting) drones
+            if frames == 1:
+                break
             for name, docked in docked_groups.items():
                 dock = docked[:8]
                 zone = self.map_graph.get_zones().get(name)

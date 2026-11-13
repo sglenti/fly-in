@@ -101,16 +101,16 @@ Besides the run target included in the Makefile, the simulation can be run direc
 and optional arguments:
 
 ```bash 
-uv run src maps/hard/01_ultimate_challenge.txt
+uv run -m src maps/hard/01_ultimate_challenge.txt
 ```
 Run with interactive, step-by-step mode 
 ```bash 
-uv run src --interactive maps/hard/01_ultimate_challenge.txt
+uv run -m src --interactive maps/hard/01_ultimate_challenge.txt
 ```
 Run with heuristics enabled (A*-like behaviour)
 
 ```bash 
-uv run src --heuristics maps/hard/01_ultimate_challenge.txt
+uv run -m src --heuristics maps/hard/01_ultimate_challenge.txt
 ```
 #### Keyboard Input
 - Press **’q’** or **’Esc’** to exit the simulation.
